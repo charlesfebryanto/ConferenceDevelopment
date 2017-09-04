@@ -159,7 +159,7 @@ public class Receptionist extends Member {
         memberIdField.setPromptText("Scan Member ID");
         GridPane.setConstraints(memberIdField, 1, 6);
         memberIdField.textProperty().addListener(e -> {
-            if(DialogBox.numberOnly(memberIdField) && memberIdField.getText().length() >= 7) {
+            if(DialogBox.numberOnly(memberIdField) && memberIdField.getText().length() >= 10) {
                     insertVisitor();
             }
         });
@@ -191,39 +191,21 @@ public class Receptionist extends Member {
         GridPane.setConstraints(boothEngagement, 2, 0);
         boothEngagement.setToggleGroup(engagementGroup);
         lectureEngagement.setSelected(true);
-//        engagementGroup.selectedToggleProperty().addListener(e -> engagementSelectionSwitch());
         engagementGroup.selectedToggleProperty().addListener(e -> engagementSelectionSwitch());
 
         // make a combobox that connected to database and get list of lecture / following the type of radio
         Label selectionLabel = new Label("Select");
         GridPane.setConstraints(selectionLabel, 0, 1);
 
-//        TableColumn<Lecture, String> lectureIdColumn = new TableColumn<>("Lecture ID");
-//        lectureIdColumn.setCellValueFactory(new PropertyValueFactory<>("lectureId"));
-//
-//        TableColumn<Lecture, String> lectureTitleColumn = new TableColumn<>("Title");
-//        lectureTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-//
+        // setCellValueFactory within composition
 //        TableColumn<Lecture, String> lectureRoomColumn = new TableColumn<>("Room");
-//
 //        lectureRoomColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Lecture, String>, ObservableValue<String>>() {
 //            @Override
 //            public ObservableValue<String> call(TableColumn.CellDataFeatures<Lecture, String> p) {
 //                return new SimpleStringProperty(p.getValue().getRoom().getName());
 //            }
 //        });
-//
-//        TableColumn<Lecture, Date> lectureDateColumn = new TableColumn<>("Date");
-//        lectureDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
-//
-//        TableColumn<Lecture, Time> lectureTimeColumn = new TableColumn<>("Time");
-//        lectureTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
-//
-//        lectureTable = new TableView<>();
-//        lectureTable.getColumns().addAll(lectureIdColumn, lectureTitleColumn, lectureRoomColumn,
-//                lectureDateColumn, lectureTimeColumn);
-//        lectureTable.setItems(getLectures());
-//        GridPane.setConstraints(lectureTable,1,1);
+
 
         selectionBox = new ComboBox<>();
         GridPane.setConstraints(selectionBox, 1, 1);
@@ -293,7 +275,6 @@ public class Receptionist extends Member {
                     contactField.clear();
                     addressField.clear();
                     dobPicker.getEditor().clear();
-                    memberIdField.clear();
                 });
             } catch (MySQLIntegrityConstraintViolationException e) {
                 if (e.getErrorCode() == 1062) {
@@ -311,13 +292,6 @@ public class Receptionist extends Member {
                     DialogBox.alertBox("Error", e + "rs");
                 }
                 try {
-                    if (st != null) {
-                        st.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
                     if (pst != null) {
                         pst.close();
                     }
@@ -333,28 +307,35 @@ public class Receptionist extends Member {
                 }
             }
         }
+        Platform.runLater(() -> memberIdField.clear());
     }
 
     private void insertEngagement() {
         String tableName = "";
         String column1 = "";
         if(engagementGroup.getSelectedToggle() == lectureEngagement) {
-            if(selectionBox.getSelectionModel().getSelectedIndex() == -1) {
-                DialogBox.alertBox("Warning", "Select Lecture First");
-            } else {
+//            if(selectionBox.getSelectionModel().getSelectedIndex() == -1) {
+//                DialogBox.alertBox("Warning", "Select Lecture First");
+//            } else {
                 tableName = "attend";
                 column1 = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
-            }
+//            }
         } else if (engagementGroup.getSelectedToggle() == boothEngagement) {
-            if (selectionBox.getSelectionModel().getSelectedIndex() == -1) {
-                DialogBox.alertBox("Warning", "Select Booth First");
-            } else {
+//            if (selectionBox.getSelectionModel().getSelectedIndex() == -1) {
+//                DialogBox.alertBox("Warning", "Select Booth First");
+//            } else {
                 tableName = "engage";
                 column1 = companies.get(selectionBox.getSelectionModel().getSelectedIndex()).getCompanyId();
-            }
+//            }
         }
         if(idScanner.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "ID is Empty");
+        } else if(selectionBox.getSelectionModel().getSelectedIndex() == -1) {
+            if(engagementGroup.getSelectedToggle() == lectureEngagement) {
+                DialogBox.alertBox("Warning", "Select Lecture First");
+            } else {
+                DialogBox.alertBox("Warning", "Select Booth FIrst");
+            }
         } else {
             try {
                 cn = MySQL.connect();
@@ -446,7 +427,8 @@ public class Receptionist extends Member {
         }
         return companies;
     }
-
+    
+    // this getLectures() based on the date, check the query
     public ObservableList<Lecture> getLectures() {
         lectures = FXCollections.observableArrayList();
         try {
@@ -501,6 +483,7 @@ public class Receptionist extends Member {
         return lectures;
     }
 
+    // calling method to populate lectures/companies list then loop to fill the combobox
     private void engagementSelectionSwitch() {
         selectionBox.getItems().remove(0, selectionBox.getItems().size());
         if (engagementGroup.getSelectedToggle() == lectureEngagement) {

@@ -861,7 +861,7 @@ public class Retailer extends Member {
         productTable.setItems(searchProduct);
     }
 
-    // Database search method, no longer needed
+    // Database search method, no longer needed, too heavy
 //    public void searchProduct() {
 //        products = FXCollections.observableArrayList();
 //        try {
