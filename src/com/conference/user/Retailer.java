@@ -49,7 +49,7 @@ public class Retailer extends Member {
         super(memberId, firstName, lastName, gender, contactNumber, address, dob, position);
     }
 
-
+    @Override
     public void view(Stage stage) {
         BorderPane layout = new BorderPane();
 
@@ -75,12 +75,70 @@ public class Retailer extends Member {
         menuBar.getMenus().addAll(profile, manageProduct);
 
 
-        layout.setCenter(mainView());
-        layout.setTop(menuBar);
 
-        Scene scene = new Scene(layout, 1024, 768);
-        stage.setTitle("Login As : Retailer | Company : " + company.getCompanyId());
-        stage.setScene(scene);
+
+        if(!isWorking()) {
+            logout(stage, loginScene);
+        } else {
+            isWorking();
+            layout.setCenter(mainView());
+            layout.setTop(menuBar);
+            Scene scene = new Scene(layout, 1024, 768);
+            stage.setTitle("Login As : Retailer | Company : " + company.getName());
+            stage.setScene(scene);
+        }
+    }
+
+    public boolean isWorking() {
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT company.companyId, company.name " +
+                    "FROM member,company,work " +
+                    "WHERE (member.memberId = work.memberId AND work.companyId = company.companyId) " +
+                    "AND member.memberId = ?";
+            pst = cn.prepareStatement(sql);
+            pst.setString(1, getMemberId());
+            rs = pst.executeQuery();
+            if(rs.next()) {
+                String companyIdValue = rs.getString(1);
+                String companyNameValue = rs.getString(2);
+
+                companyId = new Label("Company ID : " + companyIdValue);
+                companyName = new Label("Company Name : " + companyNameValue);
+
+                company = new Company(companyIdValue, companyNameValue, products);
+                getProducts();
+                return true;
+            } else {
+                DialogBox.alertBox("Warning", "Retailer not associated to any companies");
+                return false;
+            }
+        } catch(Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            try {
+                if(rs != null) {
+                    rs.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "rs");
+            }
+            try {
+                if(pst != null) {
+                    pst.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "st");
+            }
+            try {
+                if(cn != null) {
+                    cn.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "cn");
+            }
+        }
+        return true;
     }
 
     @Override
@@ -99,54 +157,12 @@ public class Retailer extends Member {
         Label loginLevel = new Label("Login Level : " + getPosition());
         GridPane.setConstraints(loginLevel, 0, 2);
 
-        try {
-            cn = MySQL.connect();
-            String sql = "SELECT company.companyId, company.name FROM member,company,work WHERE member.memberId = work.memberId AND work.companyId = company.companyId AND member.memberId = " + getMemberId();
-            st = cn.createStatement();
-            rs = st.executeQuery(sql);
-            if(rs.next()) {
-                companyId = new Label("Company ID : " + rs.getString(1));
-                companyName = new Label("Company Name : " + rs.getString(2));
-                company = new Company(rs.getString(1), rs.getString(2));
-            } else {
-                companyId = new Label("Company ID : ");
-                companyName = new Label("Company Name : ");
-            }
-            GridPane.setConstraints(companyId, 0, 3);
-            GridPane.setConstraints(companyName, 0, 4);
-        } catch(Exception e) {
-            DialogBox.alertBox("Warning", e + "");
-        } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(st != null) {
-                    st.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
-        }
+        // just use one time, no need to create method
 
+
+//        isWorking();
+        GridPane.setConstraints(companyId, 0, 3);
+        GridPane.setConstraints(companyName, 0, 4);
         body.getChildren().addAll(loginId, loginName, loginLevel, companyId, companyName);
 
         return body;
@@ -417,6 +433,7 @@ public class Retailer extends Member {
 
 
         productTable = new TableView<>();
+        // get data from database
         productTable.setItems(getProducts());
         productTable.getSelectionModel().selectedItemProperty().addListener((value, oldValue, newValue) -> {
             // if the newValue not null -> get the value and set to the field
@@ -772,6 +789,7 @@ public class Retailer extends Member {
             boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
                     productNameField.getText() + " ? Product that already have a record cannot be deleted");
             if (confirm) {
+                // check for record
                 try {
                     cn = MySQL.connect();
                     String sqlCount = "SELECT COUNT(have.productId) FROM have WHERE have.productId = ?";
@@ -780,24 +798,32 @@ public class Retailer extends Member {
                     rs = pst.executeQuery();
 
                     if (rs.next()) {
+                        // cancel if product have a record
                         if (rs.getInt(1) > 0) {
                             DialogBox.alertBox("Warning", "Cannot delete " + productNameField.getText() +
                                     ", Product already have a record.");
                         } else {
 
-                            String sqlOwn = "DELETE FROM own WHERE productId = ? AND companyId = ?";
-                            pst = cn.prepareStatement(sqlOwn);
-                            pst.setString(1, productIdField.getText());
-                            pst.setString(2, company.getCompanyId());
-                            pst.executeUpdate();
-
-                            String sqlProduct = "DELETE FROM product WHERE productId = ?";
-                            pst = cn.prepareStatement(sqlProduct);
-                            pst.setString(1, productIdField.getText());
-                            pst.executeUpdate();
+//                            String sqlOwn = "DELETE FROM own WHERE productId = ? AND companyId = ?";
+//                            pst = cn.prepareStatement(sqlOwn);
+//                            pst.setString(1, productIdField.getText());
+//                            pst.setString(2, company.getCompanyId());
+//                            pst.executeUpdate();
+//
+//                            String sqlProduct = "DELETE FROM product WHERE productId = ?";
+//                            pst = cn.prepareStatement(sqlProduct);
+//                            pst.setString(1, productIdField.getText());
+//                            pst.executeUpdate();
 
                             // set the items on productTable view using getProducts method to get the current data from database
                             DialogBox.alertBox("Success", productNameField.getText() + " Deleted Successfully");
+
+                            for(int i=0; i<products.size(); i++) {
+                                if(products.get(i).getProductId().equals(productIdField.getText())) {
+                                    System.out.println(products.get(i).getName() + " deleted");
+                                }
+                            }
+
                             addProduct();
                             productTable.refresh();
                             productTable.setItems(getProducts());
@@ -842,15 +868,19 @@ public class Retailer extends Member {
     }
 
     public void searchProduct() {
+        // declare local scope observable product
         ObservableList<Product> searchProduct = FXCollections.observableArrayList();
         if(searchType.getSelectionModel().getSelectedItem().equals("Name")){
             String name = searchField.getText().toLowerCase();
+            // loop the global observable product from database
+            // add matched name product to the local scope search product
             for(int i=0; i<products.size(); i++) {
                 if(products.get(i).getName().toLowerCase().contains(name)) {
                     searchProduct.add(products.get(i));
                 }
             }
         } else {
+            // search for Id
             String id = searchField.getText().toLowerCase();
             for(int i=0; i<products.size(); i++) {
                 if(products.get(i).getProductId().toLowerCase().contains(id)) {
@@ -858,88 +888,17 @@ public class Retailer extends Member {
                 }
             }
         }
+        // set product table with item from search product observable
         productTable.setItems(searchProduct);
     }
 
-    // Database search method, no longer needed, too heavy
-//    public void searchProduct() {
-//        products = FXCollections.observableArrayList();
-//        try {
-//            String sql;
-//            cn = MySqlConnect.connectDB();
-//            if(searchType.getSelectionModel().getSelectedItem() == "Name") {
-//                sql = "SELECT * " +
-//                        "FROM product, company, own " +
-//                        "WHERE product.productId = own.productId " +
-//                        "AND own.companyId = company.companyId " +
-//                        "AND company.companyId = ? " +
-//                        "AND product.name LIKE ?";
-//            } else {
-//                sql = "SELECT * " +
-//                        "FROM product, company, own " +
-//                        "WHERE product.productId = own.productId " +
-//                        "AND own.companyId = company.companyId " +
-//                        "AND company.companyId = ? " +
-//                        "AND product.productid LIKE ?";
-//            }
-//                //            if(searchType.getSelectionModel().getSelectedItem() == "productID") {}
-////                sql = "SELECT * FROM product, company, own WHERE product.productId = own.productId AND own.companyId = company.companyId AND company.companyId = ? AND product.productid LIKE ?";
-////            }
-//                pst = cn.prepareStatement(sql);
-////            pst.setString(2, searchType.getSelectionModel().getSelectedItem());
-//                pst.setString(1, company.getCompanyId());
-//                pst.setString(2, "%" + searchField.getText() + "%");
-//                rs = pst.executeQuery();
-//
-////            int i = 0;
-////            }
-//            while(rs.next()) {
-//                products.add(new Product(rs.getString(1), rs.getString(2), rs.getDouble(3), rs.getInt(4)));
-////                selectionBox.getItems().add(lectures.get(i).getLectureId() + " - " + lectures.get(i).getTitle());
-////                i++;
-//            }
-//            productTable.setItems(products);
-//        } catch (SQLException e) {
-//            DialogBox.alertBox("Warning", e.getErrorCode() + " : " + e.getMessage());
-//        } catch (Exception e) {
-//            DialogBox.alertBox("Warning", e + "");
-//        } finally {
-//            try {
-//                if(rs != null) {
-//                    rs.close();
-//                }
-//            } catch (Exception e) {
-//                DialogBox.alertBox("Error", e + "rs");
-//            }
-//            try {
-//                if(st != null) {
-//                    st.close();
-//                }
-//            } catch (Exception e) {
-//                DialogBox.alertBox("Error", e + "st");
-//            }
-//            try {
-//                if(pst != null) {
-//                    pst.close();
-//                }
-//            } catch (Exception e) {
-//                DialogBox.alertBox("Error", e + "st");
-//            }
-//            try {
-//                if(cn != null) {
-//                    cn.close();
-//                }
-//            } catch (Exception e) {
-//                DialogBox.alertBox("Error", e + "cn");
-//            }
-//        }
-//    }
-
+    // save product and refresh product table to get new value
     public void saveProduct() {
         if(isEmpty()) {
             DialogBox.alertBox("Warning", "Empty field is not allowed");
         } else {
             try {
+                // back end process for database
                 cn = MySQL.connect();
                 String sqlProduct = "INSERT INTO product VALUES(?, ?, ?, ?)";
                 pst = cn.prepareStatement(sqlProduct);
@@ -955,8 +914,19 @@ public class Retailer extends Member {
                 pst.setString(2, productIdField.getText());
                 pst.executeUpdate();
                 DialogBox.alertBox("Success", productNameField.getText() + " Inserted Successfuly");
+
+                // front end process
+                products.add(new Product(productIdField.getText(),
+                        productNameField.getText(),
+                        Double.parseDouble(priceField.getText()),
+                        Integer.parseInt(stockField.getText())));
+
                 addProduct();
-                productTable.setItems(getProducts());
+                // refreshing only front end to improve performance
+                productTable.refresh();
+
+                // refresh by repopulate from database, bad for performance
+//                productTable.setItems(getProducts());
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
@@ -1010,13 +980,19 @@ public class Retailer extends Member {
         }
     }
 
-    private ObservableList<Product> getProducts() {
+    // get product and save to products observable
+    public ObservableList<Product> getProducts() {
         products = FXCollections.observableArrayList();
         try {
             cn = MySQL.connect();
-            String sql = "SELECT product.* FROM product, company, own WHERE product.productId = own.productId AND own.companyId = company.companyId AND company.companyId = '" + company.getCompanyId() + "'";
-            st = cn.createStatement();
-            rs = st.executeQuery(sql);
+            String sql = "SELECT product.* " +
+                    "FROM product, company, own " +
+                    "WHERE product.productId = own.productId AND own.companyId = company.companyId " +
+                    "AND company.companyId = ?";
+            pst = cn.prepareStatement(sql);
+            pst.setString(1, company.getCompanyId());
+            rs = pst.executeQuery();
+
             while(rs.next()) {
                 products.add(new Product(rs.getString(1),
                         rs.getString(2),
@@ -1032,13 +1008,6 @@ public class Retailer extends Member {
                 }
             } catch (Exception e) {
                 DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(st != null) {
-                    st.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
             }
             try {
                 if(pst != null) {

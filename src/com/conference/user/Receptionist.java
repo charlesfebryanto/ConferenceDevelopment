@@ -2,6 +2,7 @@ package com.conference.user;
 
 import com.conference.DialogBox;
 import com.conference.MySQL;
+import com.conference.company.Product;
 import com.conference.lecture.Lecture;
 import com.conference.company.Company;
 import com.conference.lecture.Room;
@@ -206,7 +207,6 @@ public class Receptionist extends Member {
 //            }
 //        });
 
-
         selectionBox = new ComboBox<>();
         GridPane.setConstraints(selectionBox, 1, 1);
         selectionBox.setMinWidth(250);
@@ -312,21 +312,13 @@ public class Receptionist extends Member {
 
     private void insertEngagement() {
         String tableName = "";
-        String column1 = "";
+        String boxId = "";
         if(engagementGroup.getSelectedToggle() == lectureEngagement) {
-//            if(selectionBox.getSelectionModel().getSelectedIndex() == -1) {
-//                DialogBox.alertBox("Warning", "Select Lecture First");
-//            } else {
                 tableName = "attend";
-                column1 = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
-//            }
+                boxId = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
         } else if (engagementGroup.getSelectedToggle() == boothEngagement) {
-//            if (selectionBox.getSelectionModel().getSelectedIndex() == -1) {
-//                DialogBox.alertBox("Warning", "Select Booth First");
-//            } else {
                 tableName = "engage";
-                column1 = companies.get(selectionBox.getSelectionModel().getSelectedIndex()).getCompanyId();
-//            }
+                boxId  = companies.get(selectionBox.getSelectionModel().getSelectedIndex()).getCompanyId();
         }
         if(idScanner.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "ID is Empty");
@@ -334,7 +326,7 @@ public class Receptionist extends Member {
             if(engagementGroup.getSelectedToggle() == lectureEngagement) {
                 DialogBox.alertBox("Warning", "Select Lecture First");
             } else {
-                DialogBox.alertBox("Warning", "Select Booth FIrst");
+                DialogBox.alertBox("Warning", "Select Booth First");
             }
         } else {
             try {
@@ -342,7 +334,7 @@ public class Receptionist extends Member {
                 String sql = "INSERT INTO " + tableName + " VALUES(?,?)";
                 pst = cn.prepareStatement(sql);
                 pst.setString(1, idScanner.getText());
-                pst.setString(2, column1);
+                pst.setString(2, boxId);
                 pst.executeUpdate();
                 DialogBox.alertBox("Success", idScanner.getText() + " Successfuly Recorded with " + selectionBox.getSelectionModel().getSelectedItem());
             } catch (MySQLIntegrityConstraintViolationException e) {
@@ -398,7 +390,8 @@ public class Receptionist extends Member {
             pst = cn.prepareStatement(sql);
             rs = pst.executeQuery();
             while(rs.next()) {
-                companies.add(new Company(rs.getString(1), rs.getString(2)));
+                Company company = new Company(rs.getString(1), rs.getString(2));
+                companies.add(company);
             }
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
@@ -427,7 +420,7 @@ public class Receptionist extends Member {
         }
         return companies;
     }
-    
+
     // this getLectures() based on the date, check the query
     public ObservableList<Lecture> getLectures() {
         lectures = FXCollections.observableArrayList();
@@ -452,7 +445,6 @@ public class Receptionist extends Member {
                         rs.getDate(3),
                         rs.getTime(4),
                         rs.getInt(5));
-
                 lectures.add(lecture);
             }
         } catch (Exception e) {
