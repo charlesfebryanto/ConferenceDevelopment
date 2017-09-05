@@ -41,11 +41,7 @@ public class Conference extends Application {
 
     public void start(Stage primaryStage) throws Exception {
         cn = MySQL.connect();
-        if(cn == null) {
-            userId.setDisable(true);
-            loginButton.setDisable(true);
-            loginStatus.setText("No Connection to Database, Turn On Database and Restart Application.");
-        }
+
 //        System.out.println(conn);
         stage = primaryStage;
         BorderPane layout = new BorderPane();
@@ -116,6 +112,12 @@ public class Conference extends Application {
         stage.setScene(scene);
         loginScene = scene;
         stage.show();
+
+        if(cn == null) {
+            userId.setDisable(true);
+            loginButton.setDisable(true);
+            loginStatus.setText("No Connection to Database, Turn On Database and Restart Application.");
+        }
     }
 
     public void login() {

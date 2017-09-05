@@ -51,6 +51,7 @@ public class Retailer extends Member {
 
     @Override
     public void view(Stage stage) {
+        getTransactions();
 
         if(!isWorking()) {
             logout(stage, loginScene);
@@ -62,10 +63,15 @@ public class Retailer extends Member {
 
             Menu profile = new Menu("Profile");
 //        MenuItem edit = new MenuItem("Edit");
+            Menu activity = new Menu("Activity");
+            MenuItem productPurchased = new MenuItem("Product Purchased");
+            productPurchased.setOnAction(e -> layout.setCenter(productPurchasedView()));
+            MenuItem boothEngagement = new MenuItem("Booth Engagement");
+            activity.getItems().addAll(productPurchased, boothEngagement);
+
             MenuItem logout = new MenuItem("Log out");
             logout.setOnAction(e -> logout(stage, loginScene));
-
-            profile.getItems().addAll(logout);
+            profile.getItems().addAll(activity, logout);
 
             Menu manageProduct = new Menu("Products");
             MenuItem sellProduct = new MenuItem("Sell Products");
@@ -453,7 +459,7 @@ public class Retailer extends Member {
 
         productTable.getColumns().addAll(productIdColumn, productNameColumn, priceColumn, stockColumn);
 
-        GridPane.setConstraints(productTable, 0, 6, 4, 1);
+        GridPane.setConstraints(productTable, 0, 6, 3, 1);
 
         body.getChildren().addAll(productName, price, stock, productId, addProductButton, saveProductButton,
                 editProductButton, deleteProductButton,
