@@ -313,12 +313,9 @@ public class Receptionist extends Member {
     }
 
     private void insertEngagement() {
-        String tableName = "";
-        String boxId = "";
-        if(engagementGroup.getSelectedToggle() == lectureEngagement) {
-                tableName = "attend";
-                boxId = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
-        } else if (engagementGroup.getSelectedToggle() == boothEngagement) {
+        String tableName = "attend";
+        String boxId = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
+        if(engagementGroup.getSelectedToggle() == boothEngagement) {
                 tableName = "engage";
                 boxId  = companies.get(selectionBox.getSelectionModel().getSelectedIndex()).getCompanyId();
         }

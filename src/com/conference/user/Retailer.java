@@ -88,6 +88,33 @@ public class Retailer extends Member {
         }
     }
 
+    @Override
+    public GridPane mainView() {
+        GridPane body = new GridPane();
+        body.setVgap(10);
+        body.setHgap(10);
+        body.setPadding(new Insets(10));
+
+        Label loginId = new Label("ID : " + getMemberId());
+        GridPane.setConstraints(loginId, 0, 0);
+
+        Label loginName = new Label("Name : " + getFirstName() + " " + getLastName());
+        GridPane.setConstraints(loginName, 0, 1);
+
+        Label loginLevel = new Label("Login Level : " + getPosition());
+        GridPane.setConstraints(loginLevel, 0, 2);
+
+        // just use one time, no need to create method
+
+
+//        isWorking();
+        GridPane.setConstraints(companyId, 0, 3);
+        GridPane.setConstraints(companyName, 0, 4);
+        body.getChildren().addAll(loginId, loginName, loginLevel, companyId, companyName);
+
+        return body;
+    }
+
     public boolean isWorking() {
         try {
             cn = MySQL.connect();
@@ -140,33 +167,6 @@ public class Retailer extends Member {
         return true;
     }
 
-    @Override
-    public GridPane mainView() {
-        GridPane body = new GridPane();
-        body.setVgap(10);
-        body.setHgap(10);
-        body.setPadding(new Insets(10));
-
-        Label loginId = new Label("ID : " + getMemberId());
-        GridPane.setConstraints(loginId, 0, 0);
-
-        Label loginName = new Label("Name : " + getFirstName() + " " + getLastName());
-        GridPane.setConstraints(loginName, 0, 1);
-
-        Label loginLevel = new Label("Login Level : " + getPosition());
-        GridPane.setConstraints(loginLevel, 0, 2);
-
-        // just use one time, no need to create method
-
-
-//        isWorking();
-        GridPane.setConstraints(companyId, 0, 3);
-        GridPane.setConstraints(companyName, 0, 4);
-        body.getChildren().addAll(loginId, loginName, loginLevel, companyId, companyName);
-
-        return body;
-    }
-
     private GridPane sellProductView() {
         GridPane body = new GridPane();
         body.setVgap(10);
@@ -200,7 +200,7 @@ public class Retailer extends Member {
         scanIdField.setPromptText("Scan Customer ID");
         GridPane.setConstraints(scanIdField, 1, 1);
         scanIdField.textProperty().addListener(e -> {
-            if (scanIdField.getText().length() >= 7) {
+            if (scanIdField.getText().length() >= 10) {
                 addTransaction();
                 Platform.runLater(() -> {
                     scanProductField.clear();
@@ -467,6 +467,7 @@ public class Retailer extends Member {
         return body;
     }
 
+    // no database involve on table view, using .refresh()
     public void addTransaction() {
         if (sellingTable.getItems().size() <= 0) {
             DialogBox.alertBox("Warning", "No Item found");
@@ -474,18 +475,20 @@ public class Retailer extends Member {
             boolean confirm = DialogBox.confirmationBox("Warning", "Finish the Transaction ?");
             if(confirm) {
 
-                long ms = 0;
+                String id = "";
                 try {
-                    String myDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-mm-dd HH:mm:ss"));
+                    long ms;
+                    String dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-mm-dd HH:mm:ss"));
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
-                    java.util.Date date = sdf.parse(myDate);
+                    java.util.Date date = sdf.parse(dateTime);
                     ms = date.getTime();
+                    String msStr = ms + "";
+                    id = msStr.substring(0, msStr.length() - 3);
                 } catch (Exception e) {
                     DialogBox.alertBox("Warning", e + "");
                 }
                 try {
                     cn = MySQL.connect();
-
                     String sqlCheckId = "SELECT * FROM member WHERE memberId = ?";
                     pst = cn.prepareStatement(sqlCheckId);
                     pst.setString(1, scanIdField.getText());
@@ -494,15 +497,15 @@ public class Retailer extends Member {
                     if (rs.next()) {
                         String sqlTransaction = "INSERT INTO transaction VALUES(?,?,?)";
                         pst = cn.prepareStatement(sqlTransaction);
-                        pst.setString(1, ms + "");
+                        pst.setString(1, id);
                         pst.setString(2, totalValue.getText());
                         pst.setDate(3, Date.valueOf(transactionDate.getText()));
                         pst.executeUpdate();
 
                         String sqlDo = "INSERT INTO do VALUES(?,?)";
                         pst = cn.prepareStatement(sqlDo);
-                        pst.setString(1, ms + "");
-                        pst.setString(2, scanIdField.getText());
+                        pst.setString(1, scanIdField.getText());
+                        pst.setString(2, id);
                         pst.executeUpdate();
 
                         for (int i = 0; i < sellingTable.getItems().size(); i++) {
@@ -510,7 +513,7 @@ public class Retailer extends Member {
                             int quantity = sellingTable.getItems().get(i).getStock();
                             String sqlSelling = "INSERT INTO have VALUES(?,?,?)";
                             pst = cn.prepareStatement(sqlSelling);
-                            pst.setString(1, ms + "");
+                            pst.setString(1, id);
                             pst.setString(2, productId);
                             pst.setInt(3, quantity);
                             pst.executeUpdate();
@@ -521,8 +524,11 @@ public class Retailer extends Member {
                             pst.setString(2, productId);
                             pst.executeUpdate();
                         }
-                        productTable.setItems(getProducts());
+//                        productTable.setItems(getProducts());
                         DialogBox.alertBox("Success", "Transaction Complete");
+                        // set item using the company object
+                        productTable.refresh();
+//                        productTable.setItems(company.getProducts());
                     } else {
                         DialogBox.alertBox("Warning", "ID not found");
                     }
@@ -606,62 +612,59 @@ public class Retailer extends Member {
         sellingTable.refresh();
     }
 
+
+    // non database checking
     public void addSelling() {
-        // check if the program is on the database or not
-        try {
-            cn = MySQL.connect();
-            String sql = "SELECT product.productId, product.name, product.price " +
-                    "FROM product, company, own " +
-                    "WHERE (product.productId = own.productId " +
-                    "AND own.companyId = company.companyId) " +
-                    "AND (product.productId = ? " +
-                    "AND company.companyId = ?)";
-            pst = cn.prepareStatement(sql);
-            pst.setString(1, scanProductField.getText());
-            pst.setString(2, company.getCompanyId());
-            rs = pst.executeQuery();
-            if(rs.next()) {
-                Product product = new Product(rs.getString(1), rs.getString(2),
-                        rs.getDouble(3), 1);
-                boolean scanned = false;
-                int scannedIndex = 0;
-                int productIndex = 0;
-                for (int i = 0; i < sellProducts.size(); i++) {
-                    // check if the newly get product object equally the same with the one on the selling view
-                    if (sellProducts.get(i).getProductId().equals(product.getProductId())) {
-                        scanned = true;
-                        // get the matched index that equal in the list item
-                        scannedIndex = i;
-                    }
+        String foundProductId = "";
+        String foundProductName = "";
+        Double foundPrice = 0.00;
+
+        boolean exist = false;
+        for(int i=0; i<productTable.getItems().size(); i++) {
+            if(productTable.getItems().get(i).getProductId().equals(scanProductField.getText())) {
+                exist = true;
+                foundProductId = productTable.getItems().get(i).getProductId();
+                foundProductName = productTable.getItems().get(i).getName();
+                foundPrice = productTable.getItems().get(i).getPrice();
+            }
+        }
+
+        if(exist) {
+            Product product = new Product(foundProductId, foundProductName, foundPrice, 1);
+            boolean scanned = false;
+            int scannedIndex = 0;
+            int productIndex = 0;
+            for (int i = 0; i < sellProducts.size(); i++) {
+                // check if the newly get product object equally the same with the one on the selling view
+                if (sellProducts.get(i).getProductId().equals(product.getProductId())) {
+                    scanned = true;
+                    // find the selling index on selling table
+                    scannedIndex = i;
                 }
+            }
 
-                for(int i = 0; i < products.size(); i++) {
-                    // decrease the product Id that have the same value with the newly created object
-                    if(products.get(i).getProductId().equals(product.getProductId())) {
-                        // only decrement when stock is more than 0
-//                        if(products.get(i).getStock() > 0) {
-//                            products.get(i).setStock(products.get(i).getStock() - 1);
-//                        }
-                        productIndex = i;
-                    }
+            for (int i = 0; i < productTable.getItems().size(); i++) {
+                // decrease the product Id that have the same value with the newly created object
+                if (productTable.getItems().get(i).getProductId().equals(product.getProductId())) {
+                    // find the product index on product table
+                    productIndex = i;
                 }
+            }
 
-                // scanned and have a stock
-                // else -> not scanned /
-                if (scanned && products.get(productIndex).getStock() > 0) {
-                        sellProducts.get(scannedIndex).setStock(sellProducts.get(scannedIndex).getStock() + 1);
-                        products.get(productIndex).setStock(products.get(productIndex).getStock() - 1);
+            // scanned and have a stock
+            // else -> not scanned
+            if (scanned && productTable.getItems().get(productIndex).getStock() > 0) {
+                sellProducts.get(scannedIndex).setStock(sellProducts.get(scannedIndex).getStock() + 1);
+                productTable.getItems().get(productIndex).setStock(
+                        productTable.getItems().get(productIndex).getStock() - 1);
 
-                } else if (!scanned && products.get(productIndex).getStock() > 0) {
+            } else if (!scanned && productTable.getItems().get(productIndex).getStock() > 0) {
 
-                        sellProducts.add(product);
-                        products.get(productIndex).setStock(products.get(productIndex).getStock() - 1);
-                } else {
-                    DialogBox.alertBox("Warning", "Product is Empty");
-                }
-
+                sellProducts.add(product);
+                productTable.getItems().get(productIndex).setStock(
+                        productTable.getItems().get(productIndex).getStock() - 1);
             } else {
-                DialogBox.alertBox("Warning", "No Product Found");
+                DialogBox.alertBox("Warning", "Product is Empty");
             }
             countTotal();
             productTable.refresh();
@@ -673,32 +676,8 @@ public class Retailer extends Member {
                 // disable transaction button
                 transactionButton.setDisable(true);
             }
-        } catch (SQLException e) {
-            DialogBox.alertBox("Warning", e.getErrorCode() + " : " + e.getMessage());
-        } catch (Exception e) {
-            DialogBox.alertBox("Warning", e + "");
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if (pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if (cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+        } else {
+                DialogBox.alertBox("Warning", "No Product Found");
         }
     }
 
