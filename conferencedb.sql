@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Sep 03, 2017 at 01:02 PM
+-- Generation Time: Sep 05, 2017 at 08:31 AM
 -- Server version: 10.1.25-MariaDB
 -- PHP Version: 7.1.7
 
@@ -32,6 +32,16 @@ CREATE TABLE `attend` (
   `memberId` varchar(20) NOT NULL,
   `lectureId` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `attend`
+--
+
+INSERT INTO `attend` (`memberId`, `lectureId`) VALUES
+('0000000000', '8675690987'),
+('0000000001', '6567897656'),
+('1111111111', '6567897656'),
+('2222222222', '6567897656');
 
 -- --------------------------------------------------------
 
@@ -63,6 +73,15 @@ CREATE TABLE `do` (
   `transactionId` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Dumping data for table `do`
+--
+
+INSERT INTO `do` (`memberId`, `transactionId`) VALUES
+('0000000000', '1483593141'),
+('0000000001', '1483593115'),
+('0000000002', '1483593371');
+
 -- --------------------------------------------------------
 
 --
@@ -73,6 +92,15 @@ CREATE TABLE `engage` (
   `memberId` varchar(20) NOT NULL,
   `companyId` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `engage`
+--
+
+INSERT INTO `engage` (`memberId`, `companyId`) VALUES
+('0000000000', '8675656898'),
+('1111111111', '5678767890'),
+('1111111111', '8675656898');
 
 -- --------------------------------------------------------
 
@@ -85,6 +113,21 @@ CREATE TABLE `have` (
   `productId` varchar(20) NOT NULL,
   `quantity` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `have`
+--
+
+INSERT INTO `have` (`transactionId`, `productId`, `quantity`) VALUES
+('1483593115', '129381293', 3),
+('1483593115', '129381923', 4),
+('1483593115', '129387192837', 2),
+('1483593141', '129381293', 2),
+('1483593141', '129381923', 1),
+('1483593141', '129387192837', 3),
+('1483593371', '129381293', 3),
+('1483593371', '129381923', 2),
+('1483593371', '129387192837', 1);
 
 -- --------------------------------------------------------
 
@@ -105,8 +148,8 @@ CREATE TABLE `lecture` (
 --
 
 INSERT INTO `lecture` (`lectureId`, `title`, `date`, `time`, `duration`) VALUES
-('6567897656', 'Marketing', '2017-09-04', '12:00:00', 60),
-('8675690987', 'Programming', '2017-09-03', '10:00:00', 120);
+('6567897656', 'Marketing', '2017-09-05', '12:00:00', 60),
+('8675690987', 'Programming', '2017-09-05', '10:00:00', 120);
 
 -- --------------------------------------------------------
 
@@ -130,8 +173,13 @@ CREATE TABLE `member` (
 --
 
 INSERT INTO `member` (`memberId`, `firstName`, `lastName`, `gender`, `contactNo`, `address`, `dob`, `position`) VALUES
+('0000000000', 'Visitor', 'Zero', 'M', '123', '123', '2017-09-06', 0),
+('0000000001', 'Visitor', 'One', 'M', '123', '123', '2017-09-04', 0),
+('0000000002', 'Visitor', 'Two', 'M', '123', '123', '2017-09-04', 0),
 ('1111111111', 'Retailer', 'Company One', 'M', '123', '123', '2017-09-12', 1),
 ('1111111112', 'Retailer', 'Company Two', 'M', '123', '123', '2017-09-12', 1),
+('1111111113', 'Retailer', 'Company Three', 'M', '123', '123', '2017-09-04', 1),
+('1232132132', 'akjsd', 'alskdj', 'M', '123123', '1232', '2017-09-08', 0),
 ('2222222222', 'Receptionist', 'Receptionist', 'M', '123', '123', '2017-09-06', 2),
 ('3333333333', 'Admin', 'Admin', 'M', '333333', 'Admin Address', '2017-09-03', 3);
 
@@ -165,6 +213,15 @@ CREATE TABLE `own` (
   `productId` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Dumping data for table `own`
+--
+
+INSERT INTO `own` (`companyId`, `productId`) VALUES
+('8675656898', '129381293'),
+('8675656898', '129381923'),
+('8675656898', '129387192837');
+
 -- --------------------------------------------------------
 
 --
@@ -177,6 +234,15 @@ CREATE TABLE `product` (
   `price` double DEFAULT NULL,
   `stock` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `product`
+--
+
+INSERT INTO `product` (`productId`, `name`, `price`, `stock`) VALUES
+('129381293', 'Fanta Bottle', 5, 2),
+('129381923', 'Coke Bottle', 5, 3),
+('129387192837', 'Sprite Bottle', 5, 4);
 
 -- --------------------------------------------------------
 
@@ -211,6 +277,16 @@ CREATE TABLE `transaction` (
   `date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Dumping data for table `transaction`
+--
+
+INSERT INTO `transaction` (`transactionId`, `total`, `date`) VALUES
+('1483592779', 25, '2017-09-05'),
+('1483593115', 45, '2017-09-05'),
+('1483593141', 30, '2017-09-05'),
+('1483593371', 30, '2017-09-05');
+
 -- --------------------------------------------------------
 
 --
@@ -221,6 +297,14 @@ CREATE TABLE `work` (
   `memberId` varchar(20) NOT NULL,
   `companyId` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `work`
+--
+
+INSERT INTO `work` (`memberId`, `companyId`) VALUES
+('1111111112', '5678767890'),
+('1111111111', '8675656898');
 
 --
 -- Indexes for dumped tables
