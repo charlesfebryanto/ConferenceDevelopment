@@ -177,6 +177,8 @@ public class Receptionist extends Member {
     }
 
     private GridPane addVisitorView() {
+        getLectures();
+        getCompanies();
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -386,7 +388,8 @@ public class Receptionist extends Member {
         try {
             cn = MySQL.connect();
             String sql = "SELECT * " +
-                    "FROM company";
+                    "FROM company " +
+                    "ORDER BY name";
             pst = cn.prepareStatement(sql);
             rs = pst.executeQuery();
             while(rs.next()) {
@@ -429,7 +432,8 @@ public class Receptionist extends Member {
             String sql = "SELECT lecture.*, room.* " +
                     "FROM lecture, room, occupy " +
                     "WHERE (lecture.lectureId = occupy.lectureId AND occupy.roomId = room.roomId) " +
-                    "AND lecture.date = ?";
+                    "AND lecture.date = ? " +
+                    "ORDER BY lecture.time";
             pst = cn.prepareStatement(sql);
             pst.setDate(1, Date.valueOf(LocalDate.now()));
             rs = pst.executeQuery();
@@ -481,8 +485,6 @@ public class Receptionist extends Member {
         if (engagementGroup.getSelectedToggle() == lectureEngagement) {
             selectionBox.setPromptText("Select Lecture");
 
-            getLectures();
-
             for(int i=0; i<lectures.size(); i++) {
                 selectionBox.getItems().add(lectures.get(i).getTitle() + " - " + lectures.get(i).getRoom().getName() +
                         " - " + lectures.get(i).getTime());
@@ -490,7 +492,6 @@ public class Receptionist extends Member {
         } else {
             selectionBox.setPromptText("Select Booth");
 
-            getCompanies();
 
             for(int i=0; i<companies.size(); i++) {
                 selectionBox.getItems().add(companies.get(i).getName());

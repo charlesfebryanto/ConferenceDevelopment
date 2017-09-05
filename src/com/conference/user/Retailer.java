@@ -28,7 +28,7 @@ import static com.conference.Conference.loginScene;
 public class Retailer extends Member {
     private Connection cn = null;
     private PreparedStatement pst = null;
-    private Statement st = null;
+//    private Statement st = null;
     private ResultSet rs = null;
 
     private Company company;
@@ -51,35 +51,34 @@ public class Retailer extends Member {
 
     @Override
     public void view(Stage stage) {
-        BorderPane layout = new BorderPane();
-
-        MenuBar menuBar = new MenuBar();
-
-        Menu profile = new Menu("Profile");
-//        MenuItem edit = new MenuItem("Edit");
-        MenuItem logout = new MenuItem("Log out");
-        logout.setOnAction(e -> logout(stage, loginScene));
-
-        profile.getItems().addAll(logout);
-
-        Menu manageProduct = new Menu("Products");
-        MenuItem sellProduct = new MenuItem("Sell Products");
-        sellProduct.setOnAction(e -> layout.setCenter(sellProductView()));
-
-        MenuItem viewProduct = new MenuItem("View Products");
-        viewProduct.setOnAction(e -> layout.setCenter(viewProductView()));
-
-        manageProduct.getItems().addAll(sellProduct, viewProduct);
-
-
-        menuBar.getMenus().addAll(profile, manageProduct);
-
-
-
 
         if(!isWorking()) {
             logout(stage, loginScene);
         } else {
+
+            BorderPane layout = new BorderPane();
+
+            MenuBar menuBar = new MenuBar();
+
+            Menu profile = new Menu("Profile");
+//        MenuItem edit = new MenuItem("Edit");
+            MenuItem logout = new MenuItem("Log out");
+            logout.setOnAction(e -> logout(stage, loginScene));
+
+            profile.getItems().addAll(logout);
+
+            Menu manageProduct = new Menu("Products");
+            MenuItem sellProduct = new MenuItem("Sell Products");
+            sellProduct.setOnAction(e -> layout.setCenter(sellProductView()));
+
+            MenuItem viewProduct = new MenuItem("View Products");
+            viewProduct.setOnAction(e -> layout.setCenter(viewProductView()));
+
+            manageProduct.getItems().addAll(sellProduct, viewProduct);
+
+
+            menuBar.getMenus().addAll(profile, manageProduct);
+
             isWorking();
             layout.setCenter(mainView());
             layout.setTop(menuBar);
@@ -306,7 +305,8 @@ public class Retailer extends Member {
         GridPane.setConstraints(searchContainer, 0, 4, 4, 1);
 
         productTable = new TableView<>();
-        productTable.setItems(getProducts());
+        productTable.setItems(company.getProducts());
+//        productTable.setItems(getProducts());
         productTable.getColumns().addAll(productIdColumn, productNameColumn, priceColumn, stockColumn);
         productTable.setMaxHeight(200);
         productTable.getSelectionModel().selectedItemProperty().addListener((value, oldValue, newValue) -> {
@@ -434,7 +434,8 @@ public class Retailer extends Member {
 
         productTable = new TableView<>();
         // get data from database
-        productTable.setItems(getProducts());
+        productTable.setItems(company.getProducts());
+//        productTable.setItems(getProducts());
         productTable.getSelectionModel().selectedItemProperty().addListener((value, oldValue, newValue) -> {
             // if the newValue not null -> get the value and set to the field
                 // if the newValue is null -> do nothing, dont get the value from the previous selected
@@ -538,13 +539,6 @@ public class Retailer extends Member {
                         DialogBox.alertBox("Error", e + "rs");
                     }
                     try {
-                        if (st != null) {
-                            st.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
-                    }
-                    try {
                         if (pst != null) {
                             pst.close();
                         }
@@ -613,6 +607,7 @@ public class Retailer extends Member {
     }
 
     public void addSelling() {
+        // check if the program is on the database or not
         try {
             cn = MySQL.connect();
             String sql = "SELECT product.productId, product.name, product.price " +
@@ -630,12 +625,12 @@ public class Retailer extends Member {
                         rs.getDouble(3), 1);
                 boolean scanned = false;
                 int scannedIndex = 0;
-                boolean noStock = false;
                 int productIndex = 0;
                 for (int i = 0; i < sellProducts.size(); i++) {
                     // check if the newly get product object equally the same with the one on the selling view
                     if (sellProducts.get(i).getProductId().equals(product.getProductId())) {
                         scanned = true;
+                        // get the matched index that equal in the list item
                         scannedIndex = i;
                     }
                 }
@@ -691,13 +686,6 @@ public class Retailer extends Member {
                 DialogBox.alertBox("Error", e + "rs");
             }
             try {
-                if (st != null) {
-                    st.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
                 if (pst != null) {
                     pst.close();
                 }
@@ -722,8 +710,11 @@ public class Retailer extends Member {
         productNameField.clear();
         priceField.clear();
         stockField.clear();
+        productTable.getSelectionModel().clearSelection();
     }
 
+    // no database refresh, need productTable.refresh() since edit is done using setter, not directly from
+    // table mutation
     public void editProduct() {
         if(isEmpty()) {
             DialogBox.alertBox("Warning", "Empty Field is not Allowed");
@@ -741,8 +732,17 @@ public class Retailer extends Member {
                     pst.setString(4, productIdField.getText());
                     pst.executeUpdate();
                     DialogBox.alertBox("Success", "Product " + productIdField.getText() + " Updated");
+
+                    for(int i=0; i<productTable.getItems().size(); i++) {
+                        if(productTable.getItems().get(i).getProductId().equals(productIdField.getText())) {
+                            productTable.getItems().get(i).setName(productNameField.getText());
+                            productTable.getItems().get(i).setPrice(Double.parseDouble(priceField.getText()));
+                            productTable.getItems().get(i).setStock(Integer.parseInt(stockField.getText()));
+                        }
+                    }
                     addProduct();
-                    productTable.setItems(getProducts());
+                    productTable.refresh();
+//                    productTable.setItems(getProducts());
                 } catch (SQLException e) {
                     DialogBox.alertBox("Warning", e.getErrorCode() + " : " + e.getMessage());
                 } catch (Exception e) {
@@ -754,13 +754,6 @@ public class Retailer extends Member {
                         }
                     } catch (Exception e) {
                         DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (st != null) {
-                            st.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
                     }
                     try {
                         if (pst != null) {
@@ -781,6 +774,7 @@ public class Retailer extends Member {
         }
     }
 
+    // no database refresh, edited directly from the table item mutation
     public void deleteProduct() {
         if(productIdField.getText().isEmpty()) {
             // this will never happen
@@ -804,29 +798,34 @@ public class Retailer extends Member {
                                     ", Product already have a record.");
                         } else {
 
-//                            String sqlOwn = "DELETE FROM own WHERE productId = ? AND companyId = ?";
-//                            pst = cn.prepareStatement(sqlOwn);
-//                            pst.setString(1, productIdField.getText());
-//                            pst.setString(2, company.getCompanyId());
-//                            pst.executeUpdate();
-//
-//                            String sqlProduct = "DELETE FROM product WHERE productId = ?";
-//                            pst = cn.prepareStatement(sqlProduct);
-//                            pst.setString(1, productIdField.getText());
-//                            pst.executeUpdate();
+                            String sqlOwn = "DELETE FROM own WHERE productId = ? AND companyId = ?";
+                            pst = cn.prepareStatement(sqlOwn);
+                            pst.setString(1, productIdField.getText());
+                            pst.setString(2, company.getCompanyId());
+                            pst.executeUpdate();
+
+                            String sqlProduct = "DELETE FROM product WHERE productId = ?";
+                            pst = cn.prepareStatement(sqlProduct);
+                            pst.setString(1, productIdField.getText());
+                            pst.executeUpdate();
 
                             // set the items on productTable view using getProducts method to get the current data from database
                             DialogBox.alertBox("Success", productNameField.getText() + " Deleted Successfully");
 
-                            for(int i=0; i<products.size(); i++) {
-                                if(products.get(i).getProductId().equals(productIdField.getText())) {
-                                    System.out.println(products.get(i).getName() + " deleted");
+                            for(int i=0; i<productTable.getItems().size(); i++) {
+                                if(productTable.getItems().get(i).getProductId().equals(productIdField.getText())) {
+//                                    System.out.println(productTable.getItems().get(i).getName() + " deleted");
+                                    // remove productTable items and refresh
+                                    // non database for front end
+                                    productTable.getItems().remove(i);
+//                                    company.getProducts().remove(i);
                                 }
                             }
 
+                            //clear
                             addProduct();
-                            productTable.refresh();
-                            productTable.setItems(getProducts());
+//                            productTable.setItems(company.getProducts());
+//                            productTable.setItems(getProducts());
                         }
                     }
                 } catch (SQLException e) {
@@ -840,13 +839,6 @@ public class Retailer extends Member {
                         }
                     } catch (Exception e) {
                         DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (st != null) {
-                            st.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
                     }
                     try {
                         if (pst != null) {
@@ -867,6 +859,8 @@ public class Retailer extends Member {
         }
     }
 
+    // no database refresh on the search result, rely on company aggregation
+    // searchProduct() = add matched products to the searchProduct() observable
     public void searchProduct() {
         // declare local scope observable product
         ObservableList<Product> searchProduct = FXCollections.observableArrayList();
@@ -874,17 +868,17 @@ public class Retailer extends Member {
             String name = searchField.getText().toLowerCase();
             // loop the global observable product from database
             // add matched name product to the local scope search product
-            for(int i=0; i<products.size(); i++) {
-                if(products.get(i).getName().toLowerCase().contains(name)) {
-                    searchProduct.add(products.get(i));
+            for(int i=0; i<company.getProducts().size(); i++) {
+                if(company.getProducts().get(i).getName().toLowerCase().contains(name)) {
+                    searchProduct.add(company.getProducts().get(i));
                 }
             }
         } else {
             // search for Id
             String id = searchField.getText().toLowerCase();
-            for(int i=0; i<products.size(); i++) {
-                if(products.get(i).getProductId().toLowerCase().contains(id)) {
-                    searchProduct.add(products.get(i));
+            for(int i=0; i<company.getProducts().size(); i++) {
+                if(company.getProducts().get(i).getProductId().toLowerCase().contains(id)) {
+                    searchProduct.add(company.getProducts().get(i));
                 }
             }
         }
@@ -892,13 +886,14 @@ public class Retailer extends Member {
         productTable.setItems(searchProduct);
     }
 
+    // no database refresh on front end
     // save product and refresh product table to get new value
     public void saveProduct() {
         if(isEmpty()) {
             DialogBox.alertBox("Warning", "Empty field is not allowed");
         } else {
             try {
-                // back end process for database
+                // back end process for database insert
                 cn = MySQL.connect();
                 String sqlProduct = "INSERT INTO product VALUES(?, ?, ?, ?)";
                 pst = cn.prepareStatement(sqlProduct);
@@ -913,15 +908,22 @@ public class Retailer extends Member {
                 pst.setString(1, company.getCompanyId());
                 pst.setString(2, productIdField.getText());
                 pst.executeUpdate();
-                DialogBox.alertBox("Success", productNameField.getText() + " Inserted Successfuly");
+                DialogBox.alertBox("Success", productNameField.getText() + " Inserted Successfully");
 
-                // front end process
-                products.add(new Product(productIdField.getText(),
+                // front end process to show the product on table
+                productTable.getItems().add(new Product(productIdField.getText(),
                         productNameField.getText(),
                         Double.parseDouble(priceField.getText()),
                         Integer.parseInt(stockField.getText())));
+//                products.add(new Product(productIdField.getText(),
+//                        productNameField.getText(),
+//                        Double.parseDouble(priceField.getText()),
+//                        Integer.parseInt(stockField.getText())));
+
 
                 addProduct();
+
+
                 // refreshing only front end to improve performance
                 productTable.refresh();
 
@@ -936,13 +938,6 @@ public class Retailer extends Member {
                     }
                 } catch (Exception e) {
                     DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (st != null) {
-                        st.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
                 }
                 try {
                     if (pst != null) {
@@ -980,6 +975,7 @@ public class Retailer extends Member {
         }
     }
 
+    // only use on isWorking() and addTransaction() (currently)
     // get product and save to products observable
     public ObservableList<Product> getProducts() {
         products = FXCollections.observableArrayList();
