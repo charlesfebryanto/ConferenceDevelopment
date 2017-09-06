@@ -51,8 +51,6 @@ public class Retailer extends Member {
 
     @Override
     public void view(Stage stage) {
-        getTransactions();
-
         if(!isWorking()) {
             logout(stage, loginScene);
         } else {
@@ -66,8 +64,9 @@ public class Retailer extends Member {
             Menu activity = new Menu("Activity");
             MenuItem productPurchased = new MenuItem("Product Purchased");
             productPurchased.setOnAction(e -> layout.setCenter(productPurchasedView()));
-            MenuItem boothEngagement = new MenuItem("Booth Engagement");
-            activity.getItems().addAll(productPurchased, boothEngagement);
+            MenuItem engagementHistory = new MenuItem("Engagement History");
+            engagementHistory.setOnAction(e -> layout.setCenter(engagementHistoryView()));
+            activity.getItems().addAll(productPurchased, engagementHistory);
 
             MenuItem logout = new MenuItem("Log out");
             logout.setOnAction(e -> logout(stage, loginScene));
@@ -89,7 +88,8 @@ public class Retailer extends Member {
             layout.setCenter(mainView());
             layout.setTop(menuBar);
             Scene scene = new Scene(layout, 1024, 768);
-            stage.setTitle("Login As : Retailer | Company : " + company.getName());
+            stage.setTitle("Login As : " + getFirstName() + " " + getLastName() +
+                    " | Company : " + company.getName() + " | Retailer");
             stage.setScene(scene);
         }
     }

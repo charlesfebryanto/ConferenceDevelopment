@@ -50,10 +50,17 @@ public class Administrator extends Member {
         MenuBar menuBar = new MenuBar();
 
         Menu profile = new Menu("Profile");
+//        MenuItem edit = new MenuItem("Edit");
+        Menu activity = new Menu("Activity");
+        MenuItem productPurchased = new MenuItem("Product Purchased");
+        productPurchased.setOnAction(e -> layout.setCenter(productPurchasedView()));
+        MenuItem engagementHistory = new MenuItem("Engagement History");
+        engagementHistory.setOnAction(e -> layout.setCenter(engagementHistoryView()));
+        activity.getItems().addAll(productPurchased, engagementHistory);
+
         MenuItem logout = new MenuItem("Log out");
         logout.setOnAction(e -> logout(stage, loginScene));
-
-        profile.getItems().addAll(logout);
+        profile.getItems().addAll(activity, logout);
 
         Menu view = new Menu("View");
         MenuItem staff = new MenuItem("Staff");
@@ -72,7 +79,7 @@ public class Administrator extends Member {
         layout.setTop(menuBar);
 
         Scene scene = new Scene(layout, 1024, 768);
-        stage.setTitle("Login As : Administrator");
+        stage.setTitle("Login As : " + getFirstName() + " " + getLastName() + " | Administrator");
         stage.setScene(scene);
     }
 
