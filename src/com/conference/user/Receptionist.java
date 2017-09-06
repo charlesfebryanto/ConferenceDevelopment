@@ -59,10 +59,17 @@ public class Receptionist extends Member {
         MenuBar menuBar = new MenuBar();
 
         Menu profile = new Menu("Profile");
+//        MenuItem edit = new MenuItem("Edit");
+        Menu activity = new Menu("Activity");
+        MenuItem productPurchased = new MenuItem("Product Purchased");
+        productPurchased.setOnAction(e -> layout.setCenter(productPurchasedView()));
+        MenuItem engagementHistory = new MenuItem("Engagement History");
+        engagementHistory.setOnAction(e -> layout.setCenter(engagementHistoryView()));
+        activity.getItems().addAll(productPurchased, engagementHistory);
+
         MenuItem logout = new MenuItem("Log out");
         logout.setOnAction(e -> logout(stage, loginScene));
-
-        profile.getItems().addAll(logout);
+        profile.getItems().addAll(activity, logout);
 
         Menu manage = new Menu("Manage");
         MenuItem registerVisitor = new MenuItem("Register Visitor");
@@ -77,7 +84,7 @@ public class Receptionist extends Member {
         layout.setTop(menuBar);
 
         Scene scene = new Scene(layout, 1024, 768);
-        stage.setTitle("Login As : Receptionist");
+        stage.setTitle("Login As : " + getFirstName() + " " + getLastName() + " | Receptionist");
         stage.setScene(scene);
     }
 
@@ -179,6 +186,7 @@ public class Receptionist extends Member {
     private GridPane addVisitorView() {
         getLectures();
         getCompanies();
+
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -313,11 +321,14 @@ public class Receptionist extends Member {
     }
 
     private void insertEngagement() {
-        String tableName = "attend";
-        String boxId = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
-        if(engagementGroup.getSelectedToggle() == boothEngagement) {
-                tableName = "engage";
-                boxId  = companies.get(selectionBox.getSelectionModel().getSelectedIndex()).getCompanyId();
+        String tableName = "";
+        String boxId = "";
+        if(engagementGroup.getSelectedToggle() == lectureEngagement) {
+            tableName = "attend";
+            boxId = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
+        } else  {
+            tableName = "engage";
+            boxId  = companies.get(selectionBox.getSelectionModel().getSelectedIndex()).getCompanyId();
         }
         if(idScanner.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "ID is Empty");
@@ -380,6 +391,7 @@ public class Receptionist extends Member {
         Platform.runLater(() -> idScanner.clear());
     }
 
+    @Override
     public ObservableList<Company> getCompanies() {
         companies = FXCollections.observableArrayList();
         try {
@@ -422,6 +434,7 @@ public class Receptionist extends Member {
     }
 
     // this getLectures() based on the date, check the query
+    @Override
     public ObservableList<Lecture> getLectures() {
         lectures = FXCollections.observableArrayList();
         try {
