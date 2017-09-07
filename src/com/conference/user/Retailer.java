@@ -449,6 +449,7 @@ public class Retailer extends Member {
             if(newValue != null) {
                 productIdField.setText(productTable.getSelectionModel().getSelectedItem().getProductId());
                 productIdField.setDisable(true);
+                saveProductButton.setDisable(true);
                 productNameField.setText(productTable.getSelectionModel().getSelectedItem().getName());
                 priceField.setText(productTable.getSelectionModel().getSelectedItem().getPrice() + "");
                 stockField.setText(productTable.getSelectionModel().getSelectedItem().getStock() + "");
@@ -690,6 +691,7 @@ public class Retailer extends Member {
     public void addProduct() {
         editProductButton.setDisable(true);
         deleteProductButton.setDisable(true);
+        saveProductButton.setDisable(false);
         productIdField.setDisable(false);
         productIdField.clear();
         productNameField.clear();
@@ -708,6 +710,7 @@ public class Retailer extends Member {
                     productNameField.getText() + " ? It will affect the related product");
             if(confirm) {
                 try {
+                    // back end
                     cn = MySQL.connect();
                     String sql = "UPDATE product set name = ?, price = ?, stock = ? WHERE productId = ?";
                     pst = cn.prepareStatement(sql);
@@ -718,6 +721,7 @@ public class Retailer extends Member {
                     pst.executeUpdate();
                     DialogBox.alertBox("Success", "Product " + productIdField.getText() + " Updated");
 
+                    // front end
                     for(int i=0; i<productTable.getItems().size(); i++) {
                         if(productTable.getItems().get(i).getProductId().equals(productIdField.getText())) {
                             productTable.getItems().get(i).setName(productNameField.getText());
