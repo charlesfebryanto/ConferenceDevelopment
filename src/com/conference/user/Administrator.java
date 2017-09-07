@@ -12,9 +12,13 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import static com.conference.Conference.loginScene;
 
@@ -24,16 +28,17 @@ public class Administrator extends Member {
 
     private Connection cn = null;
     private PreparedStatement pst = null;
-    private Statement st = null;
+//    private Statement st = null;
     private ResultSet rs = null;
 
-    private Label staffFirstName, staffLastName, gender, staffContactNo, staffAddress, staffId, dob, position;
-    private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField;
+    private Label staffFirstName, staffLastName, gender, staffContactNo, staffAddress, staffId, dob, position, search;
+    private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField, searchField;
     private TextArea staffAddressField;
+    private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton;
     private ToggleGroup genderGroup;
     private RadioButton maleRadio, femaleRadio;
     private DatePicker dobPicker;
-    private ComboBox<String> positionBox;
+    private ComboBox<String> positionBox, searchType;
 
     private ObservableList<Member> members;
 
@@ -84,6 +89,7 @@ public class Administrator extends Member {
     }
 
     private GridPane staffView() {
+        getMembers();
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -143,6 +149,28 @@ public class Administrator extends Member {
         dob = new Label("Date of Birth : ");
         GridPane.setConstraints(dob, 0, 5);
         dobPicker = new DatePicker();
+        StringConverter converter = new StringConverter<LocalDate>() {
+            DateTimeFormatter dateFormatter =
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            @Override
+            public String toString(LocalDate date) {
+                if (date != null) {
+                    return dateFormatter.format(date);
+                } else {
+                    return "";
+                }
+            }
+            @Override
+            public LocalDate fromString(String string) {
+                if (string != null && !string.isEmpty()) {
+                    return LocalDate.parse(string, dateFormatter);
+                } else {
+                    return null;
+                }
+            }
+        };
+        dobPicker.setConverter(converter);
+
         GridPane.setConstraints(dobPicker, 1, 5);
 
         position = new Label("Position : ");
@@ -160,18 +188,47 @@ public class Administrator extends Member {
         GridPane.setConstraints(staffIdField, 1, 7);
         staffIdField.textProperty().addListener(e -> {
             if(DialogBox.numberOnly(staffIdField) && staffIdField.getText().length() >= 10) {
-                insertStaff();
+
             }
         });
 
-        Button addStaff = new Button("Add Member");
-        GridPane.setConstraints(addStaff, 1, 8);
-        addStaff.setOnAction(e -> insertStaff());
+        addStaffButton = new Button("Add Member");
+        GridPane.setConstraints(addStaffButton, 1, 8);
+        addStaffButton.setOnAction(e -> addStaff());
 
-        Button deleteStaff = new Button("Delete Member");
-        GridPane.setConstraints(deleteStaff, 2, 8);
-        deleteStaff.setOnAction(e -> deleteStaff());
+        saveStaffButton = new Button("Save Member");
+        GridPane.setConstraints(saveStaffButton, 2, 8);
+        saveStaffButton.setOnAction(e -> insertStaff());
 
+        deleteStaffButton = new Button("Delete Member");
+        GridPane.setConstraints(deleteStaffButton, 3, 8);
+        deleteStaffButton.setOnAction(e -> deleteStaff());
+        deleteStaffButton.setDisable(true);
+
+        editStaffButton = new Button("Edit Member");
+        GridPane.setConstraints(editStaffButton, 4, 8);
+        editStaffButton.setOnAction(e -> editStaff());
+        editStaffButton.setDisable(true);
+
+        HBox searchContainer = new HBox();
+        searchContainer.setPadding(new Insets(10));
+        searchContainer.setSpacing(10);
+
+        search = new Label("Search : ");
+        searchField = new TextField();
+        searchField.setPromptText("Insert Something");
+        searchField.setPrefWidth(200);
+        searchField.textProperty().addListener(e -> searchStaff());
+
+        searchType = new ComboBox<>();
+        searchType.getItems().addAll("memberID", "Name");
+        searchType.getSelectionModel().select(1);
+        searchStaffButton = new Button("Search");
+        searchStaffButton.setOnAction(e -> searchStaff());
+
+        searchContainer.getChildren().addAll(search, searchField, searchType, searchStaffButton);
+
+        GridPane.setConstraints(searchContainer, 0, 9, 4, 1);
         TableColumn<Member, String> staffIdColumn = new TableColumn<>("ID");
         staffIdColumn.setMinWidth(200);
         staffIdColumn.setCellValueFactory(new PropertyValueFactory<>("memberId"));
@@ -205,21 +262,39 @@ public class Administrator extends Member {
         staffPositionColumn.setCellValueFactory(new PropertyValueFactory<>("position"));
 
         memberTable = new TableView<>();
-        memberTable.setItems(getMembers());
+        memberTable.setItems(members);
         memberTable.getColumns().addAll(staffIdColumn, staffFirstNameColumn, staffLastNameColumn, staffGenderColumn,
                 staffContactColumn, staffAddressColumn, staffDobColumn, staffPositionColumn);
         memberTable.setMaxHeight(200);
         memberTable.getSelectionModel().selectedItemProperty().addListener((value, oldValue, newValue) -> {
             if ( newValue != null ) {
-                // put listener action here
+
+                staffIdField.setDisable(true);
+                saveStaffButton.setDisable(true);
+                editStaffButton.setDisable(false);
+                deleteStaffButton.setDisable(false);
+
+                staffIdField.setText(memberTable.getSelectionModel().getSelectedItem().getMemberId());
+                staffFirstNameField.setText(memberTable.getSelectionModel().getSelectedItem().getFirstName());
+                staffLastNameField.setText(memberTable.getSelectionModel().getSelectedItem().getLastName());
+                if(memberTable.getSelectionModel().getSelectedItem().getGender().equals("M")) {
+                    maleRadio.setSelected(true);
+                } else {
+                    femaleRadio.setSelected(true);
+                }
+
+                staffContactField.setText(memberTable.getSelectionModel().getSelectedItem().getContactNumber());
+                staffAddressField.setText(memberTable.getSelectionModel().getSelectedItem().getAddress());
+                dobPicker.setValue(memberTable.getSelectionModel().getSelectedItem().getDob().toLocalDate());
+                positionBox.getSelectionModel().select(memberTable.getSelectionModel().getSelectedItem().getPosition());
             }
         });
-        GridPane.setConstraints(memberTable, 0, 9, 5, 1);
+        GridPane.setConstraints(memberTable, 0, 10, 5, 1);
 
         body.getChildren().addAll(staffFirstName, staffLastName, gender, staffContactNo, staffAddress, dob);
         body.getChildren().addAll(staffFirstNameField, staffLastNameField, maleRadio, femaleRadio, staffContactField,
-                staffAddressField, dobPicker, staffId, staffIdField, addStaff, deleteStaff,
-                position, positionBox, memberTable);
+                staffAddressField, dobPicker, staffId, staffIdField, addStaffButton, deleteStaffButton, saveStaffButton, editStaffButton,
+                position, positionBox, memberTable, searchContainer);
 
         return body;
     }
@@ -235,6 +310,7 @@ public class Administrator extends Member {
                 selectedGender = femaleRadio.getText().charAt(0) + "";
             }
             try {
+                // back end process
                 cn = MySQL.connect();
                 String sql = "INSERT INTO member VALUES(?,?,?,?,?,?,?,?)";
                 pst = cn.prepareStatement(sql);
@@ -248,18 +324,29 @@ public class Administrator extends Member {
                 pst.setInt(8, positionBox.getSelectionModel().getSelectedIndex());
                 pst.executeUpdate();
                 DialogBox.alertBox("Success", positionBox.getSelectionModel().getSelectedItem() + " " +
-                        staffFirstNameField.getText() + " " + staffLastNameField.getText() + " Successfuly added.");
-                memberTable.setItems(getMembers());
-                Platform.runLater(() -> {
-                    staffFirstNameField.clear();
-                    staffLastNameField.clear();
-                    maleRadio.setSelected(true);
-                    staffContactField.clear();
-                    staffAddressField.clear();
-                    positionBox.getSelectionModel().clearSelection();
-                    dobPicker.getEditor().clear();
-                    staffIdField.clear();
-                });
+                        staffFirstNameField.getText() + " " + staffLastNameField.getText() + " Successfully added.");
+
+
+                // front end process
+                Member member = new Member(staffIdField.getText(),
+                        staffFirstNameField.getText(),
+                        staffLastNameField.getText(),
+                        selectedGender,
+                        staffContactField.getText(),
+                        staffAddressField.getText(),
+                        Date.valueOf(dobPicker.getValue()),
+                        positionBox.getSelectionModel().getSelectedIndex());
+
+
+                memberTable.getItems().add(member);
+
+                addStaff();
+
+                memberTable.refresh();
+//                memberTable.setItems(getMembers());
+
+                // clear
+
             } catch (MySQLIntegrityConstraintViolationException e) {
                 if (e.getErrorCode() == 1062) {
                     DialogBox.alertBox("Error", staffIdField.getText() + " Already Registered.");
@@ -274,13 +361,6 @@ public class Administrator extends Member {
                     }
                 } catch (Exception e) {
                     DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (st != null) {
-                        st.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
                 }
                 try {
                     if (pst != null) {
@@ -299,6 +379,47 @@ public class Administrator extends Member {
             }
 
         }
+    }
+
+    public void searchStaff() {
+        // declare local scope observable product
+        ObservableList<Member> searchStaff = FXCollections.observableArrayList();
+        if(searchType.getSelectionModel().getSelectedItem().equals("Name")){
+            String name = searchField.getText().toLowerCase();
+            for(int i=0; i<members.size(); i++) {
+                if(members.get(i).getFirstName().toLowerCase().contains(name) ||
+                        members.get(i).getLastName().toLowerCase().contains(name)) {
+                    searchStaff.add(members.get(i));
+                }
+            }
+        } else {
+            // search for Id
+            String id = searchField.getText().toLowerCase();
+            for(int i=0; i<members.size(); i++) {
+                if(members.get(i).getMemberId().toLowerCase().contains(id)) {
+                    searchStaff.add(members.get(i));
+                }
+            }
+        }
+        // set product table with item from search product observable
+        memberTable.setItems(searchStaff);
+    }
+
+    public void addStaff() {
+        editStaffButton.setDisable(true);
+        deleteStaffButton.setDisable(true);
+        saveStaffButton.setDisable(false);
+        staffIdField.setDisable(false);
+        Platform.runLater(() -> {
+            staffFirstNameField.clear();
+            staffLastNameField.clear();
+            maleRadio.setSelected(true);
+            staffContactField.clear();
+            staffAddressField.clear();
+            positionBox.getSelectionModel().clearSelection();
+            dobPicker.getEditor().clear();
+            staffIdField.clear();
+        });
     }
 
     public boolean isStaffFormEmpty() {
@@ -331,6 +452,78 @@ public class Administrator extends Member {
         }
     }
 
+    public void editStaff() {
+        if(isStaffFormEmpty()) {
+            DialogBox.alertBox("Warning", "Empty Field is not Allowed");
+        } else {
+            try {
+                cn = MySQL.connect();
+//                String sql = "UPDATE product set name = ?, price = ?, stock = ? WHERE productId = ?";
+                String sql = "UPDATE member " +
+                        "SET firstName = ?, lastName = ?, gender = ?, contactNo = ?, " +
+                        "address = ?, dob = ?, position = ? " +
+                        "WHERE memberId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, staffFirstNameField.getText());
+                pst.setString(2, staffLastNameField.getText());
+                String selectedGender = "M";
+                if(genderGroup.getSelectedToggle() == femaleRadio) {
+                    selectedGender = "F";
+                }
+                pst.setString(3, selectedGender);
+                pst.setString(4, staffContactField.getText());
+                pst.setString(5, staffAddressField.getText());
+                pst.setDate(6, Date.valueOf(dobPicker.getValue()));
+                pst.setInt(7, positionBox.getSelectionModel().getSelectedIndex());
+                pst.setString(8, staffIdField.getText());
+                pst.executeUpdate();
+
+                DialogBox.alertBox("Success", "Member " + staffFirstNameField.getText() + " " +
+                        staffLastNameField.getText() + " Updated");
+
+                for(int i=0; i<memberTable.getItems().size(); i++) {
+                    if(memberTable.getItems().get(i).getMemberId().equals(staffIdField.getText())) {
+                        memberTable.getItems().get(i).setFirstName(staffFirstNameField.getText());
+                        memberTable.getItems().get(i).setLastName(staffLastNameField.getText());
+                        memberTable.getItems().get(i).setGender(selectedGender);
+                        memberTable.getItems().get(i).setContactNumber(staffContactField.getText());
+                        memberTable.getItems().get(i).setAddress(staffAddressField.getText());
+                        memberTable.getItems().get(i).setDob(Date.valueOf(dobPicker.getValue()));
+                        memberTable.getItems().get(i).setPosition(positionBox.getSelectionModel().getSelectedIndex());
+                    }
+                }
+
+                addStaff();
+                memberTable.refresh();
+
+            } catch(Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+
     public void deleteStaff() {
         if(staffIdField.getText().isEmpty()) {
             // this will never happen
@@ -341,6 +534,7 @@ public class Administrator extends Member {
                     "It is not recommended to remove record");
             if (confirm) {
                 try {
+                    // back end process
                     cn = MySQL.connect();
                     String sqlSelect = "SELECT * " +
                             "FROM member " +
@@ -354,12 +548,16 @@ public class Administrator extends Member {
                         pst.setString(1, staffIdField.getText());
                         pst.executeUpdate();
 
-                        for (int i=0; i<members.size(); i++) {
-                            if(members.get(i).getMemberId().equals(staffIdField.getText())) {
-                                members.remove(i);
+                        DialogBox.alertBox("Success", staffFirstNameField.getText() + " " +
+                        staffLastNameField.getText() + " Deleted Successfully");
+                        // front end process
+                        for (int i=0; i<memberTable.getItems().size(); i++) {
+                            if(memberTable.getItems().get(i).getMemberId().equals(staffIdField.getText())) {
+                                memberTable.getItems().remove(i);
                             }
                         }
-                        
+
+                        // using refresh instead of repopulate using database
                         memberTable.refresh();
                     } else {
                         DialogBox.alertBox("Warning", "Delete Fail. " + staffIdField.getText() +
@@ -376,13 +574,6 @@ public class Administrator extends Member {
                         }
                     } catch (Exception e) {
                         DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (st != null) {
-                            st.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
                     }
                     try {
                         if (pst != null) {
@@ -411,8 +602,8 @@ public class Administrator extends Member {
                     "FROM member " +
                     "WHERE position > 0 " +
                     "ORDER BY position ASC";
-            st = cn.createStatement();
-            rs = st.executeQuery(sql);
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
             while(rs.next()) {
                 members.add(new Member(rs.getString(1),
                         rs.getString(2),
@@ -432,13 +623,6 @@ public class Administrator extends Member {
                 }
             } catch (Exception e) {
                 DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(st != null) {
-                    st.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
             }
             try {
                 if(pst != null) {
