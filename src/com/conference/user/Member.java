@@ -211,14 +211,14 @@ public class Member {
         Label lectureLabel = new Label("Lecture :");
         GridPane.setConstraints(lectureLabel, 0, 0);
 
-        TableColumn<Lecture, String> lectureIdColumn = new TableColumn<>("ID");
-        lectureIdColumn.setCellValueFactory(new PropertyValueFactory<>("lectureId"));
-        lectureIdColumn.setPrefWidth(1004.00/6.00);
-        lectureIdColumn.setResizable(false);
+//        TableColumn<Lecture, String> lectureIdColumn = new TableColumn<>("ID");
+//        lectureIdColumn.setCellValueFactory(new PropertyValueFactory<>("lectureId"));
+//        lectureIdColumn.setPrefWidth(1004.00/6.00);
+//        lectureIdColumn.setResizable(false);
 
         TableColumn<Lecture, String> lectureTitleColumn = new TableColumn<>("Title");
         lectureTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-        lectureTitleColumn.setPrefWidth(1004.00/6.00);
+        lectureTitleColumn.setPrefWidth(1004.00/5.00);
         lectureTitleColumn.setResizable(false);
 
         TableColumn<Lecture, String> lectureRoomColumn = new TableColumn<>("Room");
@@ -228,26 +228,26 @@ public class Member {
                 return new SimpleStringProperty(p.getValue().getRoom().getName());
             }
         });
-        lectureRoomColumn.setPrefWidth(1004.00/6.00);
+        lectureRoomColumn.setPrefWidth(1004.00/5.00);
         lectureRoomColumn.setResizable(false);
 
         TableColumn<Lecture, Date> lectureDateColumn = new TableColumn<>("Date");
         lectureDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
-        lectureDateColumn.setPrefWidth(1004.00/6.00);
+        lectureDateColumn.setPrefWidth(1004.00/5.00);
         lectureDateColumn.setResizable(false);
 
         TableColumn<Lecture, Time> lectureTimeColumn = new TableColumn<>("Time");
         lectureTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
-        lectureTimeColumn.setPrefWidth(1004.00/6.00);
+        lectureTimeColumn.setPrefWidth(1004.00/5.00);
         lectureTimeColumn.setResizable(false);
 
         TableColumn<Lecture, Integer> lectureDurationColumn = new TableColumn<>("Duration");
         lectureDurationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
-        lectureDurationColumn.setPrefWidth(1004.00/6.00);
+        lectureDurationColumn.setPrefWidth(1004.00/5.00);
         lectureDurationColumn.setResizable(false);
 
         TableView<Lecture> lectureTable = new TableView<>();
-        lectureTable.getColumns().addAll(lectureIdColumn, lectureTitleColumn, lectureRoomColumn, lectureDateColumn,
+        lectureTable.getColumns().addAll(lectureTitleColumn, lectureRoomColumn, lectureDateColumn,
                 lectureTimeColumn, lectureDurationColumn);
         lectureTable.setItems(lectures);
 
@@ -501,5 +501,37 @@ public class Member {
 
     public int getPosition() {
         return position;
+    }
+
+    public void setMemberId(String memberId) {
+        this.memberId = memberId;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setDob(Date dob) {
+        this.dob = dob;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
     }
 }
