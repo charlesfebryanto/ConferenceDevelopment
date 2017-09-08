@@ -8,6 +8,8 @@ public class Company {
     private String name;
     private ObservableList<Product> products;
 
+
+
     public Company(String companyId, String name, ObservableList<Product> products) {
         this.companyId = companyId;
         this.name = name;
@@ -30,5 +32,9 @@ public class Company {
 
     public ObservableList<Product> getProducts() {
         return products;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

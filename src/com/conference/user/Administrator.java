@@ -34,18 +34,18 @@ public class Administrator extends Member {
     private ResultSet rs = null;
 
     private Label staffFirstName, staffLastName, gender, staffContactNo, staffAddress, staffId, dob, position, search,
-            companyId,companyName;
+            companyId,companyName, searchCompany;
 
     private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField, searchField,
-            companyIdField, companyNameField;
+            companyIdField, companyNameField, searchCompanyField;
 
     private TextArea staffAddressField;
     private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton,
-        saveCompanyButton, editCompanyButton, deleteCompanyButton, addCompanyButton;
+        saveCompanyButton, editCompanyButton, deleteCompanyButton, addCompanyButton, searchCompanyButton;
     private ToggleGroup genderGroup;
     private RadioButton maleRadio, femaleRadio;
     private DatePicker dobPicker;
-    private ComboBox<String> positionBox, searchType;
+    private ComboBox<String> positionBox, searchType, searchCompanyType;
 
     private ObservableList<Member> members;
     private ObservableList<Company> companies;
@@ -209,7 +209,7 @@ public class Administrator extends Member {
 
         saveStaffButton = new Button("Save Member");
         GridPane.setConstraints(saveStaffButton, 2, 8);
-        saveStaffButton.setOnAction(e -> insertStaff());
+        saveStaffButton.setOnAction(e -> saveStaff());
 
         deleteStaffButton = new Button("Delete Member");
         GridPane.setConstraints(deleteStaffButton, 3, 8);
@@ -240,6 +240,8 @@ public class Administrator extends Member {
         searchContainer.getChildren().addAll(search, searchField, searchType, searchStaffButton);
 
         GridPane.setConstraints(searchContainer, 0, 9, 4, 1);
+
+
         TableColumn<Member, String> staffIdColumn = new TableColumn<>("ID");
         staffIdColumn.setMinWidth(200);
         staffIdColumn.setCellValueFactory(new PropertyValueFactory<>("memberId"));
@@ -320,30 +322,61 @@ public class Administrator extends Member {
 
         companyName = new Label("Company Name");
         GridPane.setConstraints(companyName, 0, 0);
-
         companyNameField = new TextField();
         companyNameField.setPromptText("Insert Company Name");
+        companyNameField.textProperty().addListener(e ->
+                DialogBox.lengthCheck(companyNameField, 20,
+                        "Warning", "Company Name is Too Long"));
         GridPane.setConstraints(companyNameField, 1, 0);
 
         companyId = new Label("Company ID");
         GridPane.setConstraints(companyId, 0, 1);
-
         companyIdField = new TextField();
         companyIdField.setPromptText("Insert Company ID");
+        companyIdField.textProperty().addListener(e ->
+                DialogBox.lengthCheck(companyIdField, 20,
+                        "Warning", "Company ID is Too Long"));
         GridPane.setConstraints(companyIdField, 1, 1);
 
         HBox companyButtonContainer = new HBox(10);
         addCompanyButton = new Button("Add Company");
+        addCompanyButton.setOnAction(e -> addCompany());
 
         saveCompanyButton = new Button("Save Company");
+        saveCompanyButton.setOnAction(e -> saveCompany());
 
         deleteCompanyButton = new Button("Delete Company");
+        deleteCompanyButton.setOnAction(e -> deleteCompany());
+        deleteCompanyButton.setDisable(true);
 
         editCompanyButton = new Button("Edit Company");
+        editCompanyButton.setOnAction(e -> editCompany());
+        editCompanyButton.setDisable(true);
 
         companyButtonContainer.getChildren().addAll(addCompanyButton, saveCompanyButton,
                 deleteCompanyButton, editCompanyButton);
         GridPane.setConstraints(companyButtonContainer, 0, 2);
+
+        HBox searchContainer = new HBox();
+        searchContainer.setPadding(new Insets(10));
+        searchContainer.setSpacing(10);
+
+        searchCompany = new Label("Search : ");
+        searchCompanyField = new TextField();
+        searchCompanyField.setPromptText("Insert Something");
+        searchCompanyField.setPrefWidth(200);
+        searchCompanyField.textProperty().addListener(e -> searchCompany());
+
+        searchCompanyType = new ComboBox<>();
+        searchCompanyType.getItems().addAll("companyID", "Name");
+        searchCompanyType.getSelectionModel().select(1);
+        searchCompanyButton = new Button("Search");
+        searchCompanyButton.setOnAction(e -> searchCompany());
+
+        searchContainer.getChildren().addAll(searchCompany, searchCompanyField,
+                searchCompanyType, searchCompanyButton);
+
+        GridPane.setConstraints(searchContainer, 0, 3, 4, 1);
 
         TableColumn<Company, String> companyIdColumn = new TableColumn<>("ID");
         companyIdColumn.setCellValueFactory(new PropertyValueFactory<>("companyId"));
@@ -355,13 +388,16 @@ public class Administrator extends Member {
         companyTable.getColumns().addAll(companyIdColumn, companyNameColumn);
         companyTable.setItems(companies);
         companyTable.getSelectionModel().selectedItemProperty().addListener(e -> {
+            saveCompanyButton.setDisable(true);
+            editCompanyButton.setDisable(false);
+            deleteCompanyButton.setDisable(false);
+            companyIdField.setDisable(true);
             ObservableList<Product> selectedCompanyId = companyTable.getSelectionModel().getSelectedItem().getProducts();
+            companyIdField.setText(companyTable.getSelectionModel().getSelectedItem().getCompanyId());
+            companyNameField.setText(companyTable.getSelectionModel().getSelectedItem().getName());
             companyProductTable.setItems(selectedCompanyId);
         });
-        GridPane.setConstraints(companyTable, 0, 3, 2, 1);
-
-        Label companyProduct = new Label("Company Product : ");
-        GridPane.setConstraints(companyProduct, 0, 4);
+        GridPane.setConstraints(companyTable, 0, 4, 2, 1);
 
         TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
         productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
@@ -381,17 +417,17 @@ public class Administrator extends Member {
 
 
 
-        GridPane.setConstraints(companyProductTable, 3, 3);
+        GridPane.setConstraints(companyProductTable, 3, 4);
 
 
-        body.getChildren().addAll(companyId, companyName, companyProduct,
+        body.getChildren().addAll(companyId, companyName,
                 companyIdField, companyNameField,
-                companyButtonContainer,
+                companyButtonContainer, searchContainer,
                 companyTable, companyProductTable);
         return body;
     }
 
-    private void insertStaff() {
+    private void saveStaff() {
         if (isStaffFormEmpty()) {
             DialogBox.alertBox("Warning", "No Empty Value is Allowed");
         } else {
@@ -487,8 +523,8 @@ public class Administrator extends Member {
         } else {
             // search for Id
             String id = searchField.getText().toLowerCase();
-            for(int i=0; i<members.size(); i++) {
-                if(members.get(i).getMemberId().toLowerCase().contains(id)) {
+            for (int i = 0; i < members.size(); i++) {
+                if (members.get(i).getMemberId().toLowerCase().contains(id)) {
                     searchStaff.add(members.get(i));
                 }
             }
@@ -683,6 +719,210 @@ public class Administrator extends Member {
                     }
                 }
             }
+        }
+    }
+
+    public void searchCompany() {
+        // declare local scope observable product
+        ObservableList<Company> searchCompany = FXCollections.observableArrayList();
+        String searchCompanyValue = searchCompanyField.getText().toLowerCase();
+        if(searchCompanyType.getSelectionModel().getSelectedItem().equals("Name")){
+//            String name = searchCompanyField.getText().toLowerCase();
+            for(int i=0; i<companies.size(); i++) {
+                if(companies.get(i).getName().toLowerCase().contains(searchCompanyValue)) {
+                    searchCompany.add(companies.get(i));
+                }
+            }
+        } else {
+            // search for Id
+//            String id = searchCompanyField.getText().toLowerCase();
+            for(int i=0; i<companies.size(); i++) {
+                if(companies.get(i).getCompanyId().toLowerCase().contains(searchCompanyValue)) {
+                    searchCompany.add(companies.get(i));
+                }
+            }
+        }
+        // set product table with item from search product observable
+        companyTable.setItems(searchCompany);
+    }
+
+    public void addCompany() {
+        saveCompanyButton.setDisable(false);
+        editCompanyButton.setDisable(true);
+        deleteCompanyButton.setDisable(true);
+        companyIdField.setDisable(false);
+        Platform.runLater(() -> {
+           companyIdField.clear();
+           companyNameField.clear();
+        });
+    }
+
+    public void editCompany() {
+        if(isCompanyFormEmpty()) {
+            DialogBox.alertBox("Warning", "Empty Field is not Allowed");
+        } else {
+            try {
+                cn = MySQL.connect();
+                String sql = "UPDATE company " +
+                        "SET name = ? " +
+                        "WHERE companyId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, companyNameField.getText());
+                pst.setString(2, companyIdField.getText());
+                pst.executeUpdate();
+
+                DialogBox.alertBox("Warning", companyNameField.getText() + " Successfully Updated");
+
+                for(int i=0; i<companyTable.getItems().size(); i++) {
+                    if(companyTable.getItems().get(i).getCompanyId().equals(companyIdField.getText())) {
+                        companyTable.getItems().get(i).setName(companyNameField.getText());
+                    }
+                }
+
+                addCompany();
+
+                companyTable.refresh();
+
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+    public void deleteCompany() {
+        boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
+                companyNameField.getText() + " ? Company that already have a record cannot be deleted");
+        if(confirm) {
+            try {
+                cn = MySQL.connect();
+                String sql = "DELETE FROM company " +
+                        "WHERE companyId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, companyIdField.getText());
+                pst.executeUpdate();
+
+                DialogBox.alertBox("Success", companyNameField.getText() + " Successfully Deleted");
+
+                // front end
+                for (int i=0; i<companyTable.getItems().size(); i++) {
+                    if(companyTable.getItems().get(i).getCompanyId().equals(companyIdField.getText())) {
+                        companyTable.getItems().remove(i);
+                    }
+                }
+
+                addCompany();
+                // using refresh instead of repopulate using database
+                companyTable.refresh();
+
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+
+    public void saveCompany() {
+        if(isCompanyFormEmpty()) {
+            DialogBox.alertBox("Warning", "Empty Field is not Allowed");
+        } else {
+            try {
+                cn = MySQL.connect();
+                String sql = "INSERT INTO company " +
+                        "VALUES(?,?)";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, companyIdField.getText());
+                pst.setString(2, companyNameField.getText());
+                pst.executeUpdate();
+
+                DialogBox.alertBox("Success", companyNameField.getText() + " Successfully Added");
+
+                Company company = new Company(companyIdField.getText(), companyNameField.getText());
+
+                companyTable.getItems().add(company);
+
+                addCompany();
+
+                companyTable.refresh();
+
+            } catch(Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+
+    private boolean isCompanyFormEmpty() {
+        if(companyIdField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Company ID is Empty");
+            return true;
+        } else if(companyNameField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Company Name is Empty");
+            return true;
+        } else {
+            return false;
         }
     }
 
