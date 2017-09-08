@@ -45,7 +45,7 @@ public class Administrator extends Member {
     private ToggleGroup genderGroup;
     private RadioButton maleRadio, femaleRadio;
     private DatePicker dobPicker;
-    private ComboBox<String> positionBox, searchType, searchCompanyType;
+    private ComboBox<String> positionBox, searchType, searchCompanyType, companyBox;
 
     private ObservableList<Member> members;
     private ObservableList<Company> companies;
@@ -191,6 +191,18 @@ public class Administrator extends Member {
         positionBox.setPromptText("Select Position");
         GridPane.setConstraints(positionBox, 1, 6);
 
+        getCompanies();
+        Label companyBoxLabel = new Label("Company : ");
+        GridPane.setConstraints(companyBoxLabel, 2, 6);
+        companyBox = new ComboBox<>();
+
+        for(int i=0; i<companies.size(); i++) {
+            companyBox.getItems().add(companies.get(i).getCompanyId() + " - " + companies.get(i).getName());
+        }
+//        companyBox.getItems().get(i).getName();
+//        companyBox.getItems().addAll("Visitor", "Retailer", "Receptionist", "Administrator");
+        companyBox.setPromptText("Select Company");
+        GridPane.setConstraints(companyBox, 3, 6);
 
         staffId = new Label("ID : ");
         GridPane.setConstraints(staffId, 0, 7);
@@ -307,7 +319,7 @@ public class Administrator extends Member {
         body.getChildren().addAll(staffFirstName, staffLastName, gender, staffContactNo, staffAddress, dob);
         body.getChildren().addAll(staffFirstNameField, staffLastNameField, maleRadio, femaleRadio, staffContactField,
                 staffAddressField, dobPicker, staffId, staffIdField, addStaffButton, deleteStaffButton, saveStaffButton, editStaffButton,
-                position, positionBox, memberTable, searchContainer);
+                position, positionBox, memberTable, searchContainer, companyBoxLabel, companyBox);
 
         return body;
     }
@@ -439,42 +451,58 @@ public class Administrator extends Member {
             }
             try {
                 // back end process
-                cn = MySQL.connect();
-                String sql = "INSERT INTO member VALUES(?,?,?,?,?,?,?,?)";
-                pst = cn.prepareStatement(sql);
-                pst.setString(1, staffIdField.getText());
-                pst.setString(2, staffFirstNameField.getText());
-                pst.setString(3, staffLastNameField.getText());
-                pst.setString(4, selectedGender);
-                pst.setString(5, staffContactField.getText());
-                pst.setString(6, staffAddressField.getText());
-                pst.setDate(7, Date.valueOf(dobPicker.getValue()));
-                pst.setInt(8, positionBox.getSelectionModel().getSelectedIndex());
-                pst.executeUpdate();
-                DialogBox.alertBox("Success", positionBox.getSelectionModel().getSelectedItem() + " " +
-                        staffFirstNameField.getText() + " " + staffLastNameField.getText() + " Successfully added.");
+                if(positionBox.getSelectionModel().getSelectedIndex() == 1 &&
+                        companyBox.getSelectionModel().getSelectedIndex() < 0) {
+                        DialogBox.alertBox("Warning", "Assign Company for Retailer");
+                } else {
+                    cn = MySQL.connect();
+                    String sql = "INSERT INTO member VALUES(?,?,?,?,?,?,?,?)";
+                    pst = cn.prepareStatement(sql);
+                    pst.setString(1, staffIdField.getText());
+                    pst.setString(2, staffFirstNameField.getText());
+                    pst.setString(3, staffLastNameField.getText());
+                    pst.setString(4, selectedGender);
+                    pst.setString(5, staffContactField.getText());
+                    pst.setString(6, staffAddressField.getText());
+                    pst.setDate(7, Date.valueOf(dobPicker.getValue()));
+                    pst.setInt(8, positionBox.getSelectionModel().getSelectedIndex());
+                    pst.executeUpdate();
+
+                    if(positionBox.getSelectionModel().getSelectedIndex() == 1 &&
+                            companyBox.getSelectionModel().getSelectedIndex() > 0) {
+                        int companyIndex = companyBox.getSelectionModel().getSelectedIndex();
+                        String selectedCompanyId = companies.get(companyIndex).getCompanyId();
+
+                        String sqlWork = "INSERT INTO work " +
+                                "VALUES(?,?)";
+                        pst = cn.prepareStatement(sqlWork);
+                        pst.setString(1, staffIdField.getText());
+                        pst.setString(2, selectedCompanyId);
+                        pst.executeUpdate();
+                    }
 
 
-                // front end process
-                Member member = new Member(staffIdField.getText(),
-                        staffFirstNameField.getText(),
-                        staffLastNameField.getText(),
-                        selectedGender,
-                        staffContactField.getText(),
-                        staffAddressField.getText(),
-                        Date.valueOf(dobPicker.getValue()),
-                        positionBox.getSelectionModel().getSelectedIndex());
+                    DialogBox.alertBox("Success", positionBox.getSelectionModel().getSelectedItem() + " " +
+                            staffFirstNameField.getText() + " " + staffLastNameField.getText() + " Successfully added.");
 
 
-                memberTable.getItems().add(member);
+                    // front end process
+                    Member member = new Member(staffIdField.getText(),
+                            staffFirstNameField.getText(),
+                            staffLastNameField.getText(),
+                            selectedGender,
+                            staffContactField.getText(),
+                            staffAddressField.getText(),
+                            Date.valueOf(dobPicker.getValue()),
+                            positionBox.getSelectionModel().getSelectedIndex());
 
-                addStaff();
 
-                memberTable.refresh();
-//                memberTable.setItems(getMembers());
+                    memberTable.getItems().add(member);
 
-                // clear
+                    addStaff();
 
+                    memberTable.refresh();
+                }
             } catch (MySQLIntegrityConstraintViolationException e) {
                 if (e.getErrorCode() == 1062) {
                     DialogBox.alertBox("Error", staffIdField.getText() + " Already Registered.");
@@ -545,6 +573,7 @@ public class Administrator extends Member {
             staffContactField.clear();
             staffAddressField.clear();
             positionBox.getSelectionModel().clearSelection();
+            companyBox.getSelectionModel().clearSelection();
             dobPicker.getEditor().clear();
             staffIdField.clear();
         });
