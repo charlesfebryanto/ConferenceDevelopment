@@ -425,6 +425,7 @@ public class Member {
                     "AND transaction.transactionId = ?";
                 pst = cn.prepareStatement(sqlProduct);
                 pst.setString(1, transactionId);
+                // use local scope ResultSet so the global scope ResultSet not get override
                 ResultSet rsProduct = pst.executeQuery();
                 // loop the product
                 while(rsProduct.next()) {

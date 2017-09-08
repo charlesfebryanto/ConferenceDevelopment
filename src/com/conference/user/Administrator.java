@@ -2,6 +2,8 @@ package com.conference.user;
 
 import com.conference.DialogBox;
 import com.conference.MySQL;
+import com.conference.company.Company;
+import com.conference.company.Product;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -31,18 +33,26 @@ public class Administrator extends Member {
 //    private Statement st = null;
     private ResultSet rs = null;
 
-    private Label staffFirstName, staffLastName, gender, staffContactNo, staffAddress, staffId, dob, position, search;
-    private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField, searchField;
+    private Label staffFirstName, staffLastName, gender, staffContactNo, staffAddress, staffId, dob, position, search,
+            companyId,companyName;
+
+    private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField, searchField,
+            companyIdField, companyNameField;
+
     private TextArea staffAddressField;
-    private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton;
+    private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton,
+        saveCompanyButton, editCompanyButton, deleteCompanyButton, addCompanyButton;
     private ToggleGroup genderGroup;
     private RadioButton maleRadio, femaleRadio;
     private DatePicker dobPicker;
     private ComboBox<String> positionBox, searchType;
 
     private ObservableList<Member> members;
+    private ObservableList<Company> companies;
 
     private TableView<Member> memberTable;
+    private TableView<Company> companyTable;
+    private TableView<Product> companyProductTable;
 
     public Administrator(String memberId, String firstName, String lastName, String gender, String contactNumber, String address, Date dob, int position) {
         super(memberId, firstName, lastName, gender, contactNumber, address, dob, position);
@@ -70,13 +80,14 @@ public class Administrator extends Member {
         Menu view = new Menu("View");
         MenuItem staff = new MenuItem("Staff");
         staff.setOnAction(e -> layout.setCenter(staffView()));
-        MenuItem product = new MenuItem("Company");
+        MenuItem company = new MenuItem("Company");
+        company.setOnAction(e -> layout.setCenter(companyView()));
         MenuItem stall = new MenuItem("Lecture");
         MenuItem booth = new MenuItem("Visitor");
         MenuItem lecture = new MenuItem("Lecture");
         MenuItem visitor = new MenuItem("Report?");
 
-        view.getItems().addAll(staff, product, stall, booth, lecture, visitor);
+        view.getItems().addAll(staff, company, stall, booth, lecture, visitor);
 
         menuBar.getMenus().addAll(profile, view);
 
@@ -296,6 +307,87 @@ public class Administrator extends Member {
                 staffAddressField, dobPicker, staffId, staffIdField, addStaffButton, deleteStaffButton, saveStaffButton, editStaffButton,
                 position, positionBox, memberTable, searchContainer);
 
+        return body;
+    }
+
+    public GridPane companyView() {
+        getCompanies();
+
+        GridPane body = new GridPane();
+        body.setVgap(10);
+        body.setHgap(10);
+        body.setPadding(new Insets(10));
+
+        companyName = new Label("Company Name");
+        GridPane.setConstraints(companyName, 0, 0);
+
+        companyNameField = new TextField();
+        companyNameField.setPromptText("Insert Company Name");
+        GridPane.setConstraints(companyNameField, 1, 0);
+
+        companyId = new Label("Company ID");
+        GridPane.setConstraints(companyId, 0, 1);
+
+        companyIdField = new TextField();
+        companyIdField.setPromptText("Insert Company ID");
+        GridPane.setConstraints(companyIdField, 1, 1);
+
+        HBox companyButtonContainer = new HBox(10);
+        addCompanyButton = new Button("Add Company");
+
+        saveCompanyButton = new Button("Save Company");
+
+        deleteCompanyButton = new Button("Delete Company");
+
+        editCompanyButton = new Button("Edit Company");
+
+        companyButtonContainer.getChildren().addAll(addCompanyButton, saveCompanyButton,
+                deleteCompanyButton, editCompanyButton);
+        GridPane.setConstraints(companyButtonContainer, 0, 2);
+
+        TableColumn<Company, String> companyIdColumn = new TableColumn<>("ID");
+        companyIdColumn.setCellValueFactory(new PropertyValueFactory<>("companyId"));
+
+        TableColumn<Company, String> companyNameColumn = new TableColumn<>("Name");
+        companyNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        companyTable = new TableView<>();
+        companyTable.getColumns().addAll(companyIdColumn, companyNameColumn);
+        companyTable.setItems(companies);
+        companyTable.getSelectionModel().selectedItemProperty().addListener(e -> {
+            ObservableList<Product> selectedCompanyId = companyTable.getSelectionModel().getSelectedItem().getProducts();
+            companyProductTable.setItems(selectedCompanyId);
+        });
+        GridPane.setConstraints(companyTable, 0, 3, 2, 1);
+
+        Label companyProduct = new Label("Company Product : ");
+        GridPane.setConstraints(companyProduct, 0, 4);
+
+        TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
+        productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<Product, String> productNameColumn = new TableColumn<>("Name");
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Product, Double> productPriceColumn = new TableColumn<>("Price");
+        productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        TableColumn<Product, Integer> productStockColumn = new TableColumn<>("Stock");
+        productStockColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+
+        companyProductTable = new TableView<>();
+        companyProductTable.getColumns().addAll(productIdColumn, productNameColumn,
+                productPriceColumn, productStockColumn);
+
+
+
+        GridPane.setConstraints(companyProductTable, 3, 3);
+
+
+        body.getChildren().addAll(companyId, companyName, companyProduct,
+                companyIdField, companyNameField,
+                companyButtonContainer,
+                companyTable, companyProductTable);
         return body;
     }
 
@@ -592,6 +684,66 @@ public class Administrator extends Member {
                 }
             }
         }
+    }
+
+    @Override
+    public ObservableList<Company> getCompanies() {
+        companies = FXCollections.observableArrayList();
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT company.* " +
+                    "FROM company " +
+                    "ORDER BY company.name ASC";
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
+            while(rs.next()) {
+                ObservableList<Product> companyProducts = FXCollections.observableArrayList();
+                String companyId = rs.getString(1);
+                String companyName = rs.getString(2);
+                String sqlProduct = "SELECT product.* " +
+                        "FROM company, own, product " +
+                        "WHERE (company.companyId = own.companyId AND own.productId = product.productId) " +
+                        "AND company.companyId = ? " +
+                        "ORDER BY product.name ASC";
+                pst = cn.prepareStatement(sqlProduct);
+                pst.setString(1, companyId);
+                ResultSet rsProduct = pst.executeQuery();
+                while(rsProduct.next()) {
+                    Product product = new Product(rsProduct.getString(1),
+                            rsProduct.getString(2),
+                            rsProduct.getDouble(3),
+                            rsProduct.getInt(4));
+                    companyProducts.add(product);
+                }
+                Company company = new Company(companyId, companyName, companyProducts);
+                companies.add(company);
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "rs");
+            }
+            try {
+                if (pst != null) {
+                    pst.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "st");
+            }
+            try {
+                if (cn != null) {
+                    cn.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "cn");
+            }
+        }
+        return companies;
     }
 
     private ObservableList<Member> getMembers() {
