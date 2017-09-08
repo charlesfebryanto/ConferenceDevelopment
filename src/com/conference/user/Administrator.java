@@ -6,6 +6,8 @@ import com.conference.company.Company;
 import com.conference.company.Product;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -16,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import javafx.util.StringConverter;
 
 import java.sql.*;
@@ -50,7 +53,7 @@ public class Administrator extends Member {
     private ObservableList<Member> members;
     private ObservableList<Company> companies;
 
-    private TableView<Member> memberTable;
+    private TableView<Member> memberTable, companyStaffTable;
     private TableView<Company> companyTable;
     private TableView<Product> companyProductTable;
 
@@ -101,6 +104,7 @@ public class Administrator extends Member {
 
     private GridPane staffView() {
         getMembers();
+        getCompanies();
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -189,9 +193,16 @@ public class Administrator extends Member {
         positionBox = new ComboBox<>();
         positionBox.getItems().addAll("Visitor", "Retailer", "Receptionist", "Administrator");
         positionBox.setPromptText("Select Position");
+        positionBox.getSelectionModel().selectedItemProperty().addListener(e -> {
+            if(positionBox.getSelectionModel().getSelectedIndex() == 1) {
+                companyBox.setDisable(false);
+            } else {
+                companyBox.setDisable(true);
+            }
+        });
         GridPane.setConstraints(positionBox, 1, 6);
 
-        getCompanies();
+
         Label companyBoxLabel = new Label("Company : ");
         GridPane.setConstraints(companyBoxLabel, 2, 6);
         companyBox = new ComboBox<>();
@@ -202,6 +213,7 @@ public class Administrator extends Member {
 //        companyBox.getItems().get(i).getName();
 //        companyBox.getItems().addAll("Visitor", "Retailer", "Receptionist", "Administrator");
         companyBox.setPromptText("Select Company");
+        companyBox.setDisable(true);
         GridPane.setConstraints(companyBox, 3, 6);
 
         staffId = new Label("ID : ");
@@ -312,6 +324,58 @@ public class Administrator extends Member {
                 staffAddressField.setText(memberTable.getSelectionModel().getSelectedItem().getAddress());
                 dobPicker.setValue(memberTable.getSelectionModel().getSelectedItem().getDob().toLocalDate());
                 positionBox.getSelectionModel().select(memberTable.getSelectionModel().getSelectedItem().getPosition());
+
+                if(memberTable.getSelectionModel().getSelectedItem().getPosition() == 1) {
+                    companyBox.setDisable(false);
+                    try {
+                        cn = MySQL.connect();
+                        String sql = "SELECT work.* " +
+                                "FROM member, work, company " +
+                                "WHERE (member.memberId = work.memberId AND work.companyId = company.companyId) " +
+                                "AND member.memberId = ?";
+                        pst = cn.prepareStatement(sql);
+                        pst.setString(1, staffIdField.getText());
+                        rs = pst.executeQuery();
+                        if(rs.next()) {
+                            String relatedCompanyId = rs.getString(2);
+                            for(int i=0; i<companies.size(); i++) {
+                                if(companies.get(i).getCompanyId().equals(relatedCompanyId)) {
+                                    companyBox.getSelectionModel().select(i);
+                                }
+                            }
+                        } else {
+                            DialogBox.alertBox("Warning", "Retailer does not related to any company");
+                            companyBox.getSelectionModel().clearSelection();
+                        }
+                    } catch (Exception e) {
+                        DialogBox.alertBox("Warning", e + "");
+                    } finally {
+                        try {
+                            if (rs != null) {
+                                rs.close();
+                            }
+                        } catch (Exception e) {
+                            DialogBox.alertBox("Error", e + "rs");
+                        }
+                        try {
+                            if (pst != null) {
+                                pst.close();
+                            }
+                        } catch (Exception e) {
+                            DialogBox.alertBox("Error", e + "st");
+                        }
+                        try {
+                            if (cn != null) {
+                                cn.close();
+                            }
+                        } catch (Exception e) {
+                            DialogBox.alertBox("Error", e + "cn");
+                        }
+                    }
+                } else {
+                    companyBox.setDisable(true);
+                    companyBox.getSelectionModel().clearSelection();
+                }
             }
         });
         GridPane.setConstraints(memberTable, 0, 10, 5, 1);
@@ -332,23 +396,29 @@ public class Administrator extends Member {
         body.setHgap(10);
         body.setPadding(new Insets(10));
 
-        companyName = new Label("Company Name");
-        GridPane.setConstraints(companyName, 0, 0);
+        GridPane companyFormContainer = new GridPane();
+        companyFormContainer.setVgap(10);
+        companyFormContainer.setHgap(10);
+//        HBox companyNameContainer = new HBox(10);
+        companyName = new Label("Company Name : ");
+        companyFormContainer.add(companyName, 0, 0);
+//        GridPane.setConstraints(companyName, 0, 0);
         companyNameField = new TextField();
         companyNameField.setPromptText("Insert Company Name");
         companyNameField.textProperty().addListener(e ->
                 DialogBox.lengthCheck(companyNameField, 20,
                         "Warning", "Company Name is Too Long"));
-        GridPane.setConstraints(companyNameField, 1, 0);
+        companyFormContainer.add(companyNameField, 1, 0);
 
-        companyId = new Label("Company ID");
-        GridPane.setConstraints(companyId, 0, 1);
+//        HBox companyIdContainer = new HBox(10);
+        companyId = new Label("Company ID : ");
+        companyFormContainer.add(companyId, 0, 1);
         companyIdField = new TextField();
         companyIdField.setPromptText("Insert Company ID");
         companyIdField.textProperty().addListener(e ->
                 DialogBox.lengthCheck(companyIdField, 20,
                         "Warning", "Company ID is Too Long"));
-        GridPane.setConstraints(companyIdField, 1, 1);
+        companyFormContainer.add(companyIdField, 1, 1);
 
         HBox companyButtonContainer = new HBox(10);
         addCompanyButton = new Button("Add Company");
@@ -367,7 +437,7 @@ public class Administrator extends Member {
 
         companyButtonContainer.getChildren().addAll(addCompanyButton, saveCompanyButton,
                 deleteCompanyButton, editCompanyButton);
-        GridPane.setConstraints(companyButtonContainer, 0, 2);
+        GridPane.setConstraints(companyButtonContainer, 0, 2, 4, 1);
 
         HBox searchContainer = new HBox();
         searchContainer.setPadding(new Insets(10));
@@ -390,11 +460,19 @@ public class Administrator extends Member {
 
         GridPane.setConstraints(searchContainer, 0, 3, 4, 1);
 
-        TableColumn<Company, String> companyIdColumn = new TableColumn<>("ID");
+        GridPane tableContainer = new GridPane();
+        tableContainer.setHgap(10);
+
+//        HBox tableContainer = new HBox(10);
+        TableColumn<Company, String> companyIdColumn = new TableColumn<>("Company ID");
         companyIdColumn.setCellValueFactory(new PropertyValueFactory<>("companyId"));
+        companyIdColumn.setResizable(false);
+        companyIdColumn.setPrefWidth(((984.00/100.00)*33.33)/2.00);
 
         TableColumn<Company, String> companyNameColumn = new TableColumn<>("Name");
         companyNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        companyNameColumn.setResizable(false);
+        companyNameColumn.setPrefWidth(((984.00/100.00)*33.33)/2.00);
 
         companyTable = new TableView<>();
         companyTable.getColumns().addAll(companyIdColumn, companyNameColumn);
@@ -404,38 +482,66 @@ public class Administrator extends Member {
             editCompanyButton.setDisable(false);
             deleteCompanyButton.setDisable(false);
             companyIdField.setDisable(true);
-            ObservableList<Product> selectedCompanyId = companyTable.getSelectionModel().getSelectedItem().getProducts();
+            ObservableList<Product> selectedCompanyProducts = companyTable.getSelectionModel().getSelectedItem().getProducts();
+            ObservableList<Member> selectedCompanyStaff = companyTable.getSelectionModel().getSelectedItem().getStaff();
             companyIdField.setText(companyTable.getSelectionModel().getSelectedItem().getCompanyId());
             companyNameField.setText(companyTable.getSelectionModel().getSelectedItem().getName());
-            companyProductTable.setItems(selectedCompanyId);
+            companyProductTable.setItems(selectedCompanyProducts);
+            companyStaffTable.setItems(selectedCompanyStaff);
         });
-        GridPane.setConstraints(companyTable, 0, 4, 2, 1);
+        // ((1024 - 20(insets)) / 100) * 30
+        companyTable.setMinWidth((984.00/100.00)*33.33);
+
 
         TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
         productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
+        productIdColumn.setPrefWidth(100);
 
         TableColumn<Product, String> productNameColumn = new TableColumn<>("Name");
         productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        productNameColumn.setPrefWidth(100);
 
         TableColumn<Product, Double> productPriceColumn = new TableColumn<>("Price");
         productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+        productPriceColumn.setPrefWidth(100);
 
         TableColumn<Product, Integer> productStockColumn = new TableColumn<>("Stock");
         productStockColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+        productStockColumn.setPrefWidth(100);
 
         companyProductTable = new TableView<>();
         companyProductTable.getColumns().addAll(productIdColumn, productNameColumn,
                 productPriceColumn, productStockColumn);
+        companyProductTable.setMinWidth((984.00/100.00)*33.33);
+
+        TableColumn<Member, String> staffIdColumn = new TableColumn<>("Staff ID");
+        staffIdColumn.setCellValueFactory(new PropertyValueFactory<>("memberId"));
+        staffIdColumn.setMinWidth(100);
+
+        TableColumn<Member, String> staffFirstNameColumn = new TableColumn<>("First Name");
+        staffFirstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+        staffFirstNameColumn.setMinWidth(150);
+
+        TableColumn<Member, String> staffLastNameColumn = new TableColumn<>("Last Name");
+        staffLastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        staffLastNameColumn.setMinWidth(150);
+
+        companyStaffTable = new TableView<>();
+        companyStaffTable.getColumns().addAll(staffIdColumn, staffFirstNameColumn, staffLastNameColumn);
+        companyStaffTable.setMinWidth((984.00/100.00)*33.33);
+
+        tableContainer.add(companyTable, 0, 0);
+        tableContainer.add(companyProductTable, 1, 0);
+        tableContainer.add(companyStaffTable, 2, 0);
+
+        GridPane.setConstraints(tableContainer, 0, 4);
 
 
 
-        GridPane.setConstraints(companyProductTable, 3, 4);
 
-
-        body.getChildren().addAll(companyId, companyName,
-                companyIdField, companyNameField,
-                companyButtonContainer, searchContainer,
-                companyTable, companyProductTable);
+        body.getChildren().addAll(companyFormContainer,
+                companyButtonContainer, searchContainer, tableContainer);
+//                companyTable, companyProductTable, companyStaffTable);
         return body;
     }
 
@@ -468,8 +574,7 @@ public class Administrator extends Member {
                     pst.setInt(8, positionBox.getSelectionModel().getSelectedIndex());
                     pst.executeUpdate();
 
-                    if(positionBox.getSelectionModel().getSelectedIndex() == 1 &&
-                            companyBox.getSelectionModel().getSelectedIndex() > 0) {
+                    if(positionBox.getSelectionModel().getSelectedIndex() == 1) {
                         int companyIndex = companyBox.getSelectionModel().getSelectedIndex();
                         String selectedCompanyId = companies.get(companyIndex).getCompanyId();
 
@@ -614,45 +719,63 @@ public class Administrator extends Member {
             DialogBox.alertBox("Warning", "Empty Field is not Allowed");
         } else {
             try {
-                cn = MySQL.connect();
+                if(positionBox.getSelectionModel().getSelectedIndex() == 1 &&
+                        companyBox.getSelectionModel().getSelectedIndex() < 0) {
+                    DialogBox.alertBox("Warning", "Assign Company for Retailer");
+                } else {
+                    cn = MySQL.connect();
 //                String sql = "UPDATE product set name = ?, price = ?, stock = ? WHERE productId = ?";
-                String sql = "UPDATE member " +
-                        "SET firstName = ?, lastName = ?, gender = ?, contactNo = ?, " +
-                        "address = ?, dob = ?, position = ? " +
-                        "WHERE memberId = ?";
-                pst = cn.prepareStatement(sql);
-                pst.setString(1, staffFirstNameField.getText());
-                pst.setString(2, staffLastNameField.getText());
-                String selectedGender = "M";
-                if(genderGroup.getSelectedToggle() == femaleRadio) {
-                    selectedGender = "F";
-                }
-                pst.setString(3, selectedGender);
-                pst.setString(4, staffContactField.getText());
-                pst.setString(5, staffAddressField.getText());
-                pst.setDate(6, Date.valueOf(dobPicker.getValue()));
-                pst.setInt(7, positionBox.getSelectionModel().getSelectedIndex());
-                pst.setString(8, staffIdField.getText());
-                pst.executeUpdate();
-
-                DialogBox.alertBox("Success", "Member " + staffFirstNameField.getText() + " " +
-                        staffLastNameField.getText() + " Updated");
-
-                for(int i=0; i<memberTable.getItems().size(); i++) {
-                    if(memberTable.getItems().get(i).getMemberId().equals(staffIdField.getText())) {
-                        memberTable.getItems().get(i).setFirstName(staffFirstNameField.getText());
-                        memberTable.getItems().get(i).setLastName(staffLastNameField.getText());
-                        memberTable.getItems().get(i).setGender(selectedGender);
-                        memberTable.getItems().get(i).setContactNumber(staffContactField.getText());
-                        memberTable.getItems().get(i).setAddress(staffAddressField.getText());
-                        memberTable.getItems().get(i).setDob(Date.valueOf(dobPicker.getValue()));
-                        memberTable.getItems().get(i).setPosition(positionBox.getSelectionModel().getSelectedIndex());
+                    String sql = "UPDATE member " +
+                            "SET firstName = ?, lastName = ?, gender = ?, contactNo = ?, " +
+                            "address = ?, dob = ?, position = ? " +
+                            "WHERE memberId = ?";
+                    pst = cn.prepareStatement(sql);
+                    pst.setString(1, staffFirstNameField.getText());
+                    pst.setString(2, staffLastNameField.getText());
+                    String selectedGender = "M";
+                    if (genderGroup.getSelectedToggle() == femaleRadio) {
+                        selectedGender = "F";
                     }
+                    pst.setString(3, selectedGender);
+                    pst.setString(4, staffContactField.getText());
+                    pst.setString(5, staffAddressField.getText());
+                    pst.setDate(6, Date.valueOf(dobPicker.getValue()));
+                    pst.setInt(7, positionBox.getSelectionModel().getSelectedIndex());
+                    pst.setString(8, staffIdField.getText());
+                    pst.executeUpdate();
+
+                    if(positionBox.getSelectionModel().getSelectedIndex() == 1) {
+                        int companyIndex = companyBox.getSelectionModel().getSelectedIndex();
+                        String selectedCompanyId = companies.get(companyIndex).getCompanyId();
+
+                        String sqlWork = "UPDATE work " +
+                                "SET companyId = ? " +
+                                "WHERE memberId = ?";
+                        pst = cn.prepareStatement(sqlWork);
+
+                        pst.setString(1, selectedCompanyId);
+                        pst.setString(2, staffIdField.getText());
+                        pst.executeUpdate();
+                    }
+
+                    DialogBox.alertBox("Success", "Member " + staffFirstNameField.getText() + " " +
+                            staffLastNameField.getText() + " Updated");
+
+                    for (int i = 0; i < memberTable.getItems().size(); i++) {
+                        if (memberTable.getItems().get(i).getMemberId().equals(staffIdField.getText())) {
+                            memberTable.getItems().get(i).setFirstName(staffFirstNameField.getText());
+                            memberTable.getItems().get(i).setLastName(staffLastNameField.getText());
+                            memberTable.getItems().get(i).setGender(selectedGender);
+                            memberTable.getItems().get(i).setContactNumber(staffContactField.getText());
+                            memberTable.getItems().get(i).setAddress(staffAddressField.getText());
+                            memberTable.getItems().get(i).setDob(Date.valueOf(dobPicker.getValue()));
+                            memberTable.getItems().get(i).setPosition(positionBox.getSelectionModel().getSelectedIndex());
+                        }
+                    }
+
+                    addStaff();
+                    memberTable.refresh();
                 }
-
-                addStaff();
-                memberTable.refresh();
-
             } catch(Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
@@ -984,7 +1107,27 @@ public class Administrator extends Member {
                             rsProduct.getInt(4));
                     companyProducts.add(product);
                 }
-                Company company = new Company(companyId, companyName, companyProducts);
+
+                ObservableList<Member> companyStaff = FXCollections.observableArrayList();
+                String sqlStaff = "SELECT member.* " +
+                        "FROM member, work, company " +
+                        "WHERE (member.memberId = work.memberId AND work.companyId = company.companyId) " +
+                        "AND company.companyId = ?";
+                pst = cn.prepareStatement(sqlStaff);
+                pst.setString(1, companyId);
+                ResultSet rsStaff = pst.executeQuery();
+                while(rsStaff.next()) {
+                    Member member = new Member(rsStaff.getString(1),
+                            rsStaff.getString(2),
+                            rsStaff.getString(3),
+                            rsStaff.getString(4),
+                            rsStaff.getString(5),
+                            rsStaff.getString(6),
+                            rsStaff.getDate(7),
+                            rsStaff.getInt(8));
+                    companyStaff.add(member);
+                }
+                Company company = new Company(companyId, companyName, companyProducts, companyStaff);
                 companies.add(company);
             }
         } catch (Exception e) {
@@ -1014,6 +1157,11 @@ public class Administrator extends Member {
         }
         return companies;
     }
+
+//    private ObservableList<Employee> getEmployees() {
+//        employees = FXCollections.observableArrayList();
+//
+//    }
 
     private ObservableList<Member> getMembers() {
         members = FXCollections.observableArrayList();

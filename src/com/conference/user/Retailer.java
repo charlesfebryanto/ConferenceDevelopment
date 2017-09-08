@@ -138,6 +138,8 @@ public class Retailer extends Member {
                 companyId = new Label("Company ID : " + companyIdValue);
                 companyName = new Label("Company Name : " + companyNameValue);
 
+                // since its already clear the logged person work with THIS company ( get from SQL )
+                // its useless to list all the corresponding staff since it has no use
                 company = new Company(companyIdValue, companyNameValue, products);
                 getProducts();
                 return true;
