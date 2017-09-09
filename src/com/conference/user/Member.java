@@ -2,12 +2,10 @@ package com.conference.user;
 
 import com.conference.DialogBox;
 import com.conference.MySQL;
-import com.conference.Transaction;
 import com.conference.company.Company;
 import com.conference.company.Product;
 import com.conference.lecture.Lecture;
 import com.conference.lecture.Room;
-import com.sun.xml.internal.bind.v2.model.core.ID;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
@@ -25,7 +23,6 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.sql.*;
-import java.util.Observable;
 
 import static com.conference.Conference.loginScene;
 

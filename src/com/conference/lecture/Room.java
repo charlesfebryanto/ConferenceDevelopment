@@ -28,4 +28,16 @@ public class Room {
     public int getSeat() {
         return seat;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setSeat(int seat) {
+        this.seat = seat;
+    }
 }

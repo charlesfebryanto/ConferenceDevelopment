@@ -1,4 +1,4 @@
-package com.conference;
+package com.conference.user;
 
 import com.conference.company.Product;
 import javafx.collections.ObservableList;

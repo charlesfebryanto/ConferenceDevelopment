@@ -4,6 +4,7 @@ import com.conference.DialogBox;
 import com.conference.MySQL;
 import com.conference.company.Company;
 import com.conference.company.Product;
+import com.conference.lecture.Room;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -15,6 +16,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -40,22 +42,26 @@ public class Administrator extends Member {
             companyId,companyName, searchCompany;
 
     private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField, searchField,
-            companyIdField, companyNameField, searchCompanyField;
+            companyIdField, companyNameField, searchCompanyField,
+            roomIdField, roomNameField, roomDescriptionField, roomSeatField, searchRoomField;
 
     private TextArea staffAddressField;
     private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton,
-        saveCompanyButton, editCompanyButton, deleteCompanyButton, addCompanyButton, searchCompanyButton;
+        saveCompanyButton, editCompanyButton, deleteCompanyButton, addCompanyButton, searchCompanyButton,
+        addRoomButton, saveRoomButton, deleteRoomButton, editRoomButton;
     private ToggleGroup genderGroup;
     private RadioButton maleRadio, femaleRadio;
     private DatePicker dobPicker;
-    private ComboBox<String> positionBox, searchType, searchCompanyType, companyBox;
+    private ComboBox<String> positionBox, searchType, searchCompanyType, companyBox, searchRoomType;
 
     private ObservableList<Member> members;
     private ObservableList<Company> companies;
+    private ObservableList<Room> rooms;
 
     private TableView<Member> memberTable, companyStaffTable;
     private TableView<Company> companyTable;
     private TableView<Product> companyProductTable;
+    private TableView<Room> roomTable;
 
     public Administrator(String memberId, String firstName, String lastName, String gender, String contactNumber, String address, Date dob, int position) {
         super(memberId, firstName, lastName, gender, contactNumber, address, dob, position);
@@ -85,12 +91,13 @@ public class Administrator extends Member {
         staff.setOnAction(e -> layout.setCenter(staffView()));
         MenuItem company = new MenuItem("Company");
         company.setOnAction(e -> layout.setCenter(companyView()));
-        MenuItem stall = new MenuItem("Lecture");
-        MenuItem booth = new MenuItem("Visitor");
         MenuItem lecture = new MenuItem("Lecture");
-        MenuItem visitor = new MenuItem("Report?");
+        MenuItem room = new MenuItem("Room");
+        room.setOnAction(e -> layout.setCenter(roomView()));
+        MenuItem visitor = new MenuItem("Visitor");
+        MenuItem report = new MenuItem("Report?");
 
-        view.getItems().addAll(staff, company, stall, booth, lecture, visitor);
+        view.getItems().addAll(staff, company, lecture, room, visitor, report);
 
         menuBar.getMenus().addAll(profile, view);
 
@@ -545,6 +552,133 @@ public class Administrator extends Member {
         return body;
     }
 
+    public GridPane roomView() {
+        getRooms();
+
+        GridPane body = new GridPane();
+        body.setHgap(10);
+        body.setVgap(10);
+        body.setPadding(new Insets(10));
+
+        GridPane roomFormContainer = new GridPane();
+        roomFormContainer.setHgap(10);
+        roomFormContainer.setVgap(10);
+
+        Label roomId = new Label("Room ID : ");
+        roomFormContainer.add(roomId, 0, 3);
+
+        roomIdField = new TextField();
+        roomIdField.setPromptText("Insert Room ID");
+        roomFormContainer.add(roomIdField, 1, 3);
+
+        Label roomName = new Label("Name : ");
+        roomFormContainer.add(roomName, 0, 0);
+
+        roomNameField = new TextField();
+        roomNameField.setPromptText("Insert Room Name");
+        roomFormContainer.add(roomNameField, 1, 0);
+
+        Label roomDescription = new Label("Description : ");
+        roomFormContainer.add(roomDescription, 0, 1);
+
+        roomDescriptionField = new TextField();
+        roomDescriptionField.setPromptText("Insert Room Description");
+        roomFormContainer.add(roomDescriptionField, 1, 1);
+
+        Label roomSeat = new Label("Seat : ");
+        roomFormContainer.add(roomSeat, 0, 2);
+
+        roomSeatField = new TextField();
+        roomSeatField.setPromptText("Insert Total Seat");
+        roomFormContainer.add(roomSeatField, 1, 2);
+
+        GridPane roomButtonContainer = new GridPane();
+        roomButtonContainer.setHgap(10);
+        addRoomButton = new Button("Add Room");
+        roomButtonContainer.add(addRoomButton, 0, 0);
+        addRoomButton.setOnAction(e -> addRoom());
+
+        saveRoomButton = new Button("Save Room");
+        roomButtonContainer.add(saveRoomButton, 1, 0);
+        saveRoomButton.setOnAction(e -> saveRoom());
+
+        editRoomButton = new Button("Edit Room");
+        roomButtonContainer.add(editRoomButton, 2, 0);
+        editRoomButton.setDisable(true);
+        editRoomButton.setOnAction(e -> editRoom());
+
+        deleteRoomButton = new Button("Delete Room");
+        roomButtonContainer.add(deleteRoomButton, 3, 0);
+        deleteRoomButton.setDisable(true);
+        deleteRoomButton.setOnAction(e -> deleteRoom());
+
+        GridPane roomTableContainer = new GridPane();
+        roomTableContainer.setVgap(10);
+        GridPane searchContainer = new GridPane();
+        searchContainer.setHgap(10);
+
+        Label searchRoom = new Label("Search : ");
+        searchContainer.add(searchRoom, 0, 0);
+
+        searchRoomField = new TextField();
+        searchRoomField.setPromptText("Insert Something");
+        searchRoomField.setPrefWidth(200);
+        searchRoomField.textProperty().addListener(e -> searchRoom());
+        searchContainer.add(searchRoomField, 1, 0);
+
+        searchRoomType = new ComboBox<>();
+        searchRoomType.getItems().addAll("roomID", "Name");
+        searchRoomType.getSelectionModel().select(1);
+        searchContainer.add(searchRoomType, 2, 0);
+
+        Button searchRoomButton = new Button("Search");
+        searchRoomButton.setOnAction(e -> searchRoom());
+        searchContainer.add(searchRoomButton, 3, 0);
+
+//        searchContainer.getChildren().addAll(searchRoom, searchRoomField,
+//                searchRoomType, searchRoomButton);
+
+        GridPane.setConstraints(searchContainer, 0, 3, 4, 1);
+        TableColumn<Room, String> roomIdColumn = new TableColumn<>("Room ID");
+        roomIdColumn.setCellValueFactory(new PropertyValueFactory<>("roomId"));
+
+        TableColumn<Room, String> roomNameColumn = new TableColumn<>("Name");
+        roomNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Room, String> roomDescriptionColumn = new TableColumn<>("Description");
+        roomDescriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+        TableColumn<Room, Integer> roomSeatColumn = new TableColumn<>("Seat");
+        roomSeatColumn.setCellValueFactory(new PropertyValueFactory<>("seat"));
+
+        roomTable = new TableView<>();
+        roomTable.getColumns().addAll(roomIdColumn, roomNameColumn, roomDescriptionColumn, roomSeatColumn);
+        roomTable.setItems(rooms);
+        roomTable.getSelectionModel().selectedItemProperty().addListener(e -> {
+
+            saveRoomButton.setDisable(true);
+            editRoomButton.setDisable(false);
+            deleteRoomButton.setDisable(false);
+            roomIdField.setDisable(true);
+            roomIdField.setText(roomTable.getSelectionModel().getSelectedItem().getRoomId());
+            roomNameField.setText(roomTable.getSelectionModel().getSelectedItem().getName());
+            roomDescriptionField.setText(roomTable.getSelectionModel().getSelectedItem().getDescription());
+            roomSeatField.setText(roomTable.getSelectionModel().getSelectedItem().getSeat() + "");
+        });
+
+        roomTableContainer.getColumnConstraints().add(new ColumnConstraints(1004));
+
+        roomTableContainer.add(searchContainer, 0, 0);
+        roomTableContainer.add(roomTable, 0, 1);
+
+
+        body.add(roomFormContainer, 0, 1);
+        body.add(roomButtonContainer, 0, 2);
+        body.add(roomTableContainer, 0, 3);
+
+        return body;
+    }
+
     private void saveStaff() {
         if (isStaffFormEmpty()) {
             DialogBox.alertBox("Warning", "No Empty Value is Allowed");
@@ -804,6 +938,7 @@ public class Administrator extends Member {
         }
     }
 
+
     public void deleteStaff() {
         if(staffIdField.getText().isEmpty()) {
             // this will never happen
@@ -874,6 +1009,27 @@ public class Administrator extends Member {
         }
     }
 
+    public void searchRoom() {
+        // declare local scope observable product
+        ObservableList<Room> searchRoom = FXCollections.observableArrayList();
+        String searchRoomValue = searchRoomField.getText().toLowerCase();
+        if(searchRoomType.getSelectionModel().getSelectedItem().equals("Name")){
+            for(int i=0; i<rooms.size(); i++) {
+                if(rooms.get(i).getName().toLowerCase().contains(searchRoomValue)) {
+                    searchRoom.add(rooms.get(i));
+                }
+            }
+        } else {
+            for(int i=0; i<rooms.size(); i++) {
+                if(rooms.get(i).getRoomId().toLowerCase().contains(searchRoomValue)) {
+                    searchRoom.add(rooms.get(i));
+                }
+            }
+        }
+        // set product table with item from search product observable
+        roomTable.setItems(searchRoom);
+    }
+
     public void searchCompany() {
         // declare local scope observable product
         ObservableList<Company> searchCompany = FXCollections.observableArrayList();
@@ -907,6 +1063,77 @@ public class Administrator extends Member {
            companyIdField.clear();
            companyNameField.clear();
         });
+    }
+
+    private void addRoom() {
+        saveRoomButton.setDisable(false);
+        editRoomButton.setDisable(true);
+        deleteRoomButton.setDisable(true);
+        roomIdField.setDisable(false);
+        Platform.runLater(() -> {
+            roomIdField.clear();
+            roomNameField.clear();
+            roomDescriptionField.clear();
+            roomSeatField.clear();
+        });
+    }
+
+    private void editRoom() {
+        if(isRoomFormEmpty()) {
+            DialogBox.alertBox("Warning", "Empty Field is not Allowed");
+        } else {
+            try {
+                cn = MySQL.connect();
+                String sql = "UPDATE room " +
+                        "SET name = ?, description = ?, seat = ? " +
+                        "WHERE roomId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, roomNameField.getText());
+                pst.setString(2, roomDescriptionField.getText());
+                pst.setInt(3, Integer.parseInt(roomSeatField.getText()));
+                pst.setString(4, roomIdField.getText());
+                pst.executeUpdate();
+
+                DialogBox.alertBox("Success", roomNameField.getText() + " Updated Successfully");
+
+                for(int i=0; i<roomTable.getItems().size(); i++) {
+                    if(roomTable.getItems().get(i).getRoomId().equals(roomIdField.getText())) {
+                        roomTable.getItems().get(i).setName(roomNameField.getText());
+                        roomTable.getItems().get(i).setDescription(roomDescriptionField.getText());
+                        roomTable.getItems().get(i).setSeat(Integer.parseInt(roomSeatField.getText()));
+                    }
+                }
+
+                addRoom();
+
+                roomTable.refresh();
+
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
     }
 
     public void editCompany() {
@@ -962,6 +1189,58 @@ public class Administrator extends Member {
             }
         }
     }
+
+    private void deleteRoom() {
+        boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
+                roomNameField.getText() + " ? Room with record cannot be removed");
+        if(confirm) {
+            try {
+                cn = MySQL.connect();
+                String sql = "DELETE FROM room " +
+                        "WHERE roomId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, roomIdField.getText());
+                pst.executeUpdate();
+                DialogBox.alertBox("Success", roomNameField.getText() + " Deleted Successfully");
+
+                for(int i=0; i<roomTable.getItems().size(); i++) {
+                    if(roomTable.getItems().get(i).getRoomId().equals(roomIdField.getText())) {
+                        roomTable.getItems().remove(i);
+                    }
+                }
+
+                addRoom();
+
+                roomTable.refresh();
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+
+
     public void deleteCompany() {
         boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
                 companyNameField.getText() + " ? Company that already have a record cannot be deleted");
@@ -1014,6 +1293,55 @@ public class Administrator extends Member {
             }
         }
     }
+    public void saveRoom() {
+        if(isRoomFormEmpty()) {
+            DialogBox.alertBox("Warning", "Empty Field is not Allowed");
+        } else {
+            try {
+                cn = MySQL.connect();
+                String sql = "INSERT INTO room " +
+                        "VALUES(?,?,?,?)";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, roomIdField.getText());
+                pst.setString(2, roomNameField.getText());
+                pst.setString(3, roomDescriptionField.getText());
+                pst.setInt(4, Integer.parseInt(roomSeatField.getText()));
+                pst.executeUpdate();
+                DialogBox.alertBox("Success", roomNameField.getText() + " Successfully Added");
+
+                Room room = new Room(roomIdField.getText(), roomNameField.getText(),
+                        roomDescriptionField.getText(), Integer.parseInt(roomSeatField.getText()));
+                roomTable.getItems().add(room);
+                addRoom();
+                roomTable.refresh();
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+
 
     public void saveCompany() {
         if(isCompanyFormEmpty()) {
@@ -1072,6 +1400,24 @@ public class Administrator extends Member {
             return true;
         } else if(companyNameField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "Company Name is Empty");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isRoomFormEmpty() {
+        if(roomIdField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Room ID is Empty");
+            return true;
+        } else if(roomNameField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Name is Empty");
+            return true;
+        } else if(roomDescriptionField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Description is Empty");
+            return true;
+        } else if(roomSeatField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Seat is Empty");
             return true;
         } else {
             return false;
@@ -1158,11 +1504,6 @@ public class Administrator extends Member {
         return companies;
     }
 
-//    private ObservableList<Employee> getEmployees() {
-//        employees = FXCollections.observableArrayList();
-//
-//    }
-
     private ObservableList<Member> getMembers() {
         members = FXCollections.observableArrayList();
         try {
@@ -1209,5 +1550,50 @@ public class Administrator extends Member {
             }
         }
         return members;
+    }
+
+    private ObservableList<Room> getRooms() {
+        rooms = FXCollections.observableArrayList();
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT * FROM room";
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
+            while(rs.next()) {
+                String roomId = rs.getString(1);
+                String roomName = rs.getString(2);
+                String roomDescription = rs.getString(3);
+                int roomSeat = rs.getInt(4);
+
+                Room room = new Room(roomId, roomName, roomDescription, roomSeat);
+
+                rooms.add(room);
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            try {
+                if(rs != null) {
+                    rs.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "rs");
+            }
+            try {
+                if(pst != null) {
+                    pst.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "st");
+            }
+            try {
+                if(cn != null) {
+                    cn.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "cn");
+            }
+        }
+        return rooms;
     }
 }
