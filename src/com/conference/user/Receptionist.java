@@ -439,11 +439,11 @@ public class Receptionist extends Member {
         lectures = FXCollections.observableArrayList();
         try {
             cn = MySQL.connect();
-            String sql = "SELECT lecture.*, room.* " +
-                    "FROM lecture, room, occupy " +
+            String sql = "SELECT lecture.*, occupy.date, occupy.time, room.* " +
+                    "FROM lecture, occupy, room " +
                     "WHERE (lecture.lectureId = occupy.lectureId AND occupy.roomId = room.roomId) " +
-                    "AND lecture.date = ? " +
-                    "ORDER BY lecture.time";
+                    "AND occupy.date = ? " +
+                    "ORDER BY occupy.date DESC, occupy.time ASC";
             pst = cn.prepareStatement(sql);
             pst.setDate(1, Date.valueOf(LocalDate.now()));
             rs = pst.executeQuery();
@@ -453,12 +453,13 @@ public class Receptionist extends Member {
                         rs.getString(7),
                         rs.getString(8),
                         rs.getInt(9));
+
                 Lecture lecture = new Lecture(rs.getString(1),
                         rs.getString(2),
                         room,
-                        rs.getDate(3),
-                        rs.getTime(4),
-                        rs.getInt(5));
+                        rs.getDate(4),
+                        rs.getTime(5),
+                        rs.getInt(3));
                 lectures.add(lecture);
             }
         } catch (Exception e) {

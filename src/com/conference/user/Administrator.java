@@ -4,6 +4,7 @@ import com.conference.DialogBox;
 import com.conference.MySQL;
 import com.conference.company.Company;
 import com.conference.company.Product;
+import com.conference.lecture.Lecture;
 import com.conference.lecture.Room;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import javafx.application.Platform;
@@ -25,6 +26,8 @@ import javafx.util.StringConverter;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import static com.conference.Conference.loginScene;
@@ -43,25 +46,30 @@ public class Administrator extends Member {
 
     private TextField staffFirstNameField, staffLastNameField, staffContactField, staffIdField, searchField,
             companyIdField, companyNameField, searchCompanyField,
-            roomIdField, roomNameField, roomDescriptionField, roomSeatField, searchRoomField;
+            roomIdField, roomNameField, roomDescriptionField, roomSeatField, searchRoomField,
+            lectureIdField, lectureTitleField, lectureDurationField, lectureHoursField, lectureMinutesField;
 
     private TextArea staffAddressField;
     private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton,
         saveCompanyButton, editCompanyButton, deleteCompanyButton, addCompanyButton, searchCompanyButton,
-        addRoomButton, saveRoomButton, deleteRoomButton, editRoomButton;
+        addRoomButton, saveRoomButton, deleteRoomButton, editRoomButton,
+        addLectureButton, saveLectureButton, deleteLectureButton, editLectureButton;
+
     private ToggleGroup genderGroup;
     private RadioButton maleRadio, femaleRadio;
-    private DatePicker dobPicker;
-    private ComboBox<String> positionBox, searchType, searchCompanyType, companyBox, searchRoomType;
+    private DatePicker dobPicker, lectureDatePicker;
+    private ComboBox<String> positionBox, searchType, searchCompanyType, companyBox, searchRoomType, roomBox;
 
     private ObservableList<Member> members;
     private ObservableList<Company> companies;
     private ObservableList<Room> rooms;
+    private ObservableList<Lecture> lectures;
 
     private TableView<Member> memberTable, companyStaffTable;
     private TableView<Company> companyTable;
     private TableView<Product> companyProductTable;
     private TableView<Room> roomTable;
+    private TableView<Lecture> lectureTable;
 
     public Administrator(String memberId, String firstName, String lastName, String gender, String contactNumber, String address, Date dob, int position) {
         super(memberId, firstName, lastName, gender, contactNumber, address, dob, position);
@@ -92,6 +100,7 @@ public class Administrator extends Member {
         MenuItem company = new MenuItem("Company");
         company.setOnAction(e -> layout.setCenter(companyView()));
         MenuItem lecture = new MenuItem("Lecture");
+        lecture.setOnAction(e -> layout.setCenter(lectureView()));
         MenuItem room = new MenuItem("Room");
         room.setOnAction(e -> layout.setCenter(roomView()));
         MenuItem visitor = new MenuItem("Visitor");
@@ -679,6 +688,197 @@ public class Administrator extends Member {
         return body;
     }
 
+    private GridPane lectureView() {
+        getRooms();
+        getLectures();
+
+        GridPane body = new GridPane();
+        body.setVgap(10);
+        body.setHgap(10);
+        body.setPadding(new Insets(10));
+
+
+        GridPane lectureFormContainer = new GridPane();
+        lectureFormContainer.setVgap(10);
+        lectureFormContainer.setHgap(10);
+
+        Label lectureId = new Label("Lecture ID : ");
+        lectureFormContainer.add(lectureId, 0, 0);
+
+        lectureIdField = new TextField();
+        lectureIdField.setPromptText("Insert Lecture ID");
+        lectureFormContainer.add(lectureIdField, 1, 0);
+
+        Label lectureTitle = new Label("Lecture Title : ");
+        lectureFormContainer.add(lectureTitle, 0, 1);
+
+        lectureTitleField = new TextField();
+        lectureTitleField.setPromptText("Insert Lecture Title");
+        lectureFormContainer.add(lectureTitleField, 1, 1);
+
+        Label lectureRoom = new Label("Lecture Room : ");
+        lectureFormContainer.add(lectureRoom, 0, 2);
+
+        roomBox = new ComboBox<>();
+        roomBox.setPromptText("Select Room");
+        for(int i=0; i<rooms.size(); i++) {
+            roomBox.getItems().add(rooms.get(i).getRoomId() + " - " + rooms.get(i).getName());
+        }
+
+        lectureFormContainer.add(roomBox, 1, 2);
+
+        Label lectureDate = new Label("Lecture Date : ");
+        lectureFormContainer.add(lectureDate, 0, 3);
+
+        lectureDatePicker = new DatePicker();
+        lectureFormContainer.add(lectureDatePicker, 1, 3);
+
+
+        Label lectureTime = new Label("Lecture Time : ");
+        lectureFormContainer.add(lectureTime, 0, 4);
+
+        GridPane timeContainer = new GridPane();
+        timeContainer.setHgap(5);
+
+        lectureHoursField = new TextField();
+        lectureHoursField.setPromptText("HH");
+        lectureHoursField.textProperty().addListener(e -> {
+            try {
+                if(lectureHoursField.getText().length() > 2) {
+                    DialogBox.alertBox("Warning", "2 Digits only");
+                    Platform.runLater(() -> lectureHoursField.clear());
+                } else {
+                    if(Integer.parseInt(lectureHoursField.getText()) > 23) {
+                        DialogBox.alertBox("Warning", "0 - 23");
+                        Platform.runLater(() -> lectureHoursField.clear());
+                    }
+                }
+            } catch (NumberFormatException nfe) {
+                DialogBox.numberOnly(lectureHoursField);
+            }
+        });
+        lectureHoursField.setMaxWidth(37.5);
+        timeContainer.add(lectureHoursField, 0,0);
+
+        Label timeColon = new Label(":");
+        timeContainer.add(timeColon, 1, 0);
+
+        lectureMinutesField = new TextField();
+        lectureMinutesField.setPromptText("MM");
+        lectureMinutesField.textProperty().addListener(e -> {
+            try {
+                if(lectureMinutesField.getText().length() > 2) {
+                    DialogBox.alertBox("Warning", "2 Digits only");
+                    Platform.runLater(() -> lectureMinutesField.clear());
+                } else {
+                    if(Integer.parseInt(lectureMinutesField.getText()) > 59) {
+                        DialogBox.alertBox("Warning", "0 - 59");
+                        Platform.runLater(() -> lectureMinutesField.clear());
+                    }
+                }
+            } catch (NumberFormatException nfe) {
+                DialogBox.numberOnly(lectureMinutesField);
+            }
+        });
+        lectureMinutesField.setMaxWidth(37.5);
+
+        timeContainer.add(lectureMinutesField, 2, 0);
+        lectureFormContainer.add(timeContainer, 1, 4);
+
+
+        Label lectureDuration = new Label("Lecture Duration : ");
+        lectureFormContainer.add(lectureDuration, 0, 5);
+
+        lectureDurationField = new TextField();
+        lectureDurationField.setPromptText("Insert Lecture Duration");
+        lectureFormContainer.add(lectureDurationField, 1, 5);
+
+        GridPane lectureButtonContainer = new GridPane();
+        lectureButtonContainer.setHgap(10);
+
+        addLectureButton = new Button("Add Lecture");
+        lectureButtonContainer.add(addLectureButton, 0, 0);
+        addLectureButton.setOnAction(e -> addLecture());
+
+        saveLectureButton = new Button("Save Lecture");
+        lectureButtonContainer.add(saveLectureButton, 1, 0);
+        saveLectureButton.setOnAction(e -> saveLecture());
+
+        deleteLectureButton = new Button("Delete Lecture");
+        lectureButtonContainer.add(deleteLectureButton, 2, 0);
+        deleteLectureButton.setOnAction(e -> deleteLecture());
+
+        editLectureButton = new Button("Edit Lecture");
+        lectureButtonContainer.add(editLectureButton, 3, 0);
+
+        GridPane lectureTableContainer = new GridPane();
+
+        TableColumn<Lecture, String> lectureIdColumn = new TableColumn<>("Lecture ID");
+        lectureIdColumn.setCellValueFactory(new PropertyValueFactory<>("lectureId"));
+
+        TableColumn<Lecture, String> lectureTitleColumn = new TableColumn<>("Title");
+        lectureTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+
+        TableColumn<Lecture, String> lectureRoomColumn = new TableColumn<>("Room");
+        lectureRoomColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Lecture, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<Lecture, String> p) {
+                return new SimpleStringProperty(p.getValue().getRoom().getName());
+            }
+        });
+
+        TableColumn<Lecture, Date> lectureDateColumn = new TableColumn<>("Date");
+        lectureDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
+
+        TableColumn<Lecture, Time> lectureTimeColumn = new TableColumn<>("Time");
+        lectureTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
+
+        TableColumn<Lecture, Integer> lectureDurationColumn = new TableColumn<>("Duration");
+        lectureDurationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
+
+
+        lectureTable = new TableView();
+        lectureTable.getColumns().addAll(lectureIdColumn, lectureTitleColumn, lectureRoomColumn,
+                lectureDateColumn, lectureTimeColumn, lectureDurationColumn);
+        lectureTable.setItems(lectures);
+        lectureTable.getSelectionModel().selectedItemProperty().addListener(e -> {
+//            saveLectureButton.setDisable(true);
+            editLectureButton.setDisable(false);
+            deleteLectureButton.setDisable(false);
+            lectureIdField.setDisable(true);
+
+            lectureIdField.setText(lectureTable.getSelectionModel().getSelectedItem().getLectureId());
+            lectureTitleField.setText(lectureTable.getSelectionModel().getSelectedItem().getTitle());
+
+            for(int i=0; i<rooms.size(); i++) {
+                if(rooms.get(i).getName().equals(lectureTable.getSelectionModel().getSelectedItem().getRoom().getName())) {
+                    roomBox.getSelectionModel().select(i);
+                }
+            }
+            lectureDatePicker.setValue(lectureTable.getSelectionModel().getSelectedItem().getDate().toLocalDate());
+            String hours = lectureTable.getSelectionModel().getSelectedItem().getTime().toLocalTime().getHour() + "";
+            String minutes = lectureTable.getSelectionModel().getSelectedItem().getTime().toLocalTime().getMinute() + "";
+            lectureHoursField.setText(hours);
+            lectureMinutesField.setText(minutes);
+            lectureDurationField.setText(lectureTable.getSelectionModel().getSelectedItem().getDuration() + "");
+
+//            lectureIdField.setText(lectureTable.getSelectionModel().getSelectedItem().getLectureId());
+//            lectureIdField.setText(lectureTable.getSelectionModel().getSelectedItem().getLectureId());
+        });
+
+        lectureTableContainer.getColumnConstraints().add(new ColumnConstraints(1004));
+        lectureTableContainer.add(lectureTable, 0, 0);
+
+
+
+
+        body.add(lectureFormContainer, 0, 0);
+        body.add(lectureButtonContainer, 0, 1);
+        body.add(lectureTableContainer, 0, 2);
+
+        return body;
+    }
+
     private void saveStaff() {
         if (isStaffFormEmpty()) {
             DialogBox.alertBox("Warning", "No Empty Value is Allowed");
@@ -1054,6 +1254,22 @@ public class Administrator extends Member {
         companyTable.setItems(searchCompany);
     }
 
+    private void addLecture() {
+        saveLectureButton.setDisable(false);
+        editLectureButton.setDisable(true);
+        deleteLectureButton.setDisable(true);
+        lectureIdField.setDisable(false);
+        Platform.runLater(() -> {
+           lectureIdField.clear();
+           lectureTitleField.clear();
+           roomBox.getSelectionModel().clearSelection();
+           lectureDatePicker.getEditor().clear();
+           lectureHoursField.clear();
+           lectureMinutesField.clear();
+           lectureDurationField.clear();
+        });
+    }
+
     public void addCompany() {
         saveCompanyButton.setDisable(false);
         editCompanyButton.setDisable(true);
@@ -1240,6 +1456,106 @@ public class Administrator extends Member {
         }
     }
 
+    public void deleteLecture() {
+        boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
+                lectureTitleField.getText() + " on " + lectureDatePicker.getValue() + " ? Lecture that have a record " +
+                "cannot be deleted");
+        if(confirm) {
+            String hours = lectureHoursField.getText();
+            String minutes = lectureMinutesField.getText();
+            if(hours.length() < 2) {
+                hours = "0"+lectureHoursField.getText();
+            }
+            if(minutes.length() < 2) {
+                minutes = "0"+lectureMinutesField.getText();
+            }
+            String strTime = hours + ":" + minutes;
+            LocalTime inputTime = LocalTime.parse(strTime);
+
+            int selectedRoom = roomBox.getSelectionModel().getSelectedIndex();
+
+            try {
+                cn = MySQL.connect();
+                String sql = "DELETE FROM occupy " +
+                        "WHERE lectureId = ? " +
+                        "AND date = ? " +
+                        "AND time = ? " +
+                        "AND roomId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, lectureIdField.getText());
+                pst.setDate(2, Date.valueOf(lectureDatePicker.getValue()));
+                pst.setTime(3, Time.valueOf(inputTime));
+                pst.setString(4, rooms.get(selectedRoom).getRoomId());
+                pst.executeUpdate();
+
+                String sqlSelect = "SELECT * " +
+                        "FROM occupy " +
+                        "WHERE lectureId = ? " +
+                        "AND date = ? " +
+                        "AND time = ? " +
+                        "AND roomId = ?";
+                pst = cn.prepareStatement(sqlSelect);
+                pst.setString(1, lectureIdField.getText());
+                pst.setDate(2, Date.valueOf(lectureDatePicker.getValue()));
+                pst.setTime(3, Time.valueOf(inputTime));
+                pst.setString(4, rooms.get(selectedRoom).getRoomId());
+                rs = pst.executeQuery();
+                // if not found
+                if(rs.next()) {
+                    String sqlLecture = "DELETE FROM lecture " +
+                            "WHERE lectureId = ?";
+                    pst = cn.prepareStatement(sqlLecture);
+                    pst.setString(1, lectureIdField.getText());
+                    pst.executeUpdate();
+                    System.out.println(0);
+                } else {
+                    System.out.println(1);
+                }
+
+                DialogBox.alertBox("Warning", lectureTitleField.getText() + " Deleted Successfully");
+
+                // front end
+                for (int i=0; i<lectureTable.getItems().size(); i++) {
+                    if(lectureTable.getItems().get(i).getLectureId().equals(lectureIdField.getText()) &&
+                            roomBox.getSelectionModel().getSelectedItem().contains(lectureTable.getItems().get(i).getRoom().getName()) &&
+                            lectureDatePicker.getValue().equals(lectureTable.getItems().get(i).getDate().toLocalDate()) &&
+                            inputTime.equals(lectureTable.getItems().get(i).getTime().toLocalTime())) {
+                        lectureTable.getItems().remove(i);
+                    }
+                }
+
+                addLecture();
+
+                // using refresh instead of repopulate using database
+                lectureTable.refresh();
+
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if (rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if (pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if (cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
 
     public void deleteCompany() {
         boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
@@ -1293,6 +1609,149 @@ public class Administrator extends Member {
             }
         }
     }
+
+    public void saveLecture() {
+        if(isLectureFormEmpty()) {
+            DialogBox.alertBox("Warning", "Empty Field is not Allowed");
+        } else {
+            try {
+                cn = MySQL.connect();
+                String sql = "SELECT lecture.lectureId " +
+                        "FROM lecture " +
+                        "WHERE lecture.lectureId = ?";
+                pst = cn.prepareStatement(sql);
+                pst.setString(1, lectureIdField.getText());
+                rs = pst.executeQuery();
+                // ! if not found
+                // insert lecture
+                if(!rs.next()) {
+                    String sqlLecture = "INSERT INTO lecture " +
+                            "VALUES (?,?,?)";
+                    pst = cn.prepareStatement(sqlLecture);
+                    pst.setString(1, lectureIdField.getText());
+                    pst.setString(2, lectureTitleField.getText());
+                    pst.setInt(3, Integer.parseInt(lectureDurationField.getText()));
+                    pst.executeUpdate();
+                }
+
+                // lecture found or not, run occupy
+                String hours = lectureHoursField.getText();
+                String minutes = lectureMinutesField.getText();
+                if(hours.length() < 2) {
+                    hours = "0"+lectureHoursField.getText();
+                }
+                if(minutes.length() < 2) {
+                    minutes = "0"+lectureMinutesField.getText();
+                }
+                String strTime = hours + ":" + minutes;
+                LocalTime inputTime = LocalTime.parse(strTime);
+
+                // time collision handling
+                boolean timeCollision = false;
+                for(int i=0; i<lectures.size(); i++) {
+//                    if(lectures.get(i).getDate().toLocalDate().isEqual(lectureDatePicker.getValue())) {
+                        LocalTime startTime = lectures.get(i).getTime().toLocalTime();
+                        int lectureDuration = lectures.get(i).getDuration();
+                        LocalTime endTime = lectures.get(i).getTime().toLocalTime().plusMinutes(lectureDuration);
+
+                        int inputDuration = Integer.parseInt(lectureDurationField.getText());
+                        LocalTime inputTimeEnd = inputTime.plusMinutes(inputDuration);
+
+                        int selectedRoom = roomBox.getSelectionModel().getSelectedIndex();
+
+//                        lectures.get(i).getRoom().getRoomId().equals(rooms.get(selectedRoom).getRoomId());
+
+
+                        // check input time is between the occupied time or not
+                        if((inputTime.isAfter(startTime) && inputTime.isBefore(endTime)) &&
+                                (lectures.get(i).getDate().toLocalDate().isEqual(lectureDatePicker.getValue()) &&
+                                        lectures.get(i).getRoom().getRoomId().equals(rooms.get(selectedRoom).getRoomId()))) {
+                            timeCollision = true;
+                        }
+
+                        // check if the input time collide with other time on finish
+
+//                        if(inputTimeEnd.isAfter(startTime) &&
+//                                (lectures.get(i).getDate().toLocalDate().isEqual(lectureDatePicker.getValue()) &&
+//                                        lectures.get(i).getRoom().getRoomId().equals(rooms.get(selectedRoom).getRoomId()))) {
+//                            timeCollision = true;
+//                        }
+
+//                    }
+                }
+
+                // timeCollision -> true - collision and run
+                // no time collision -> timeCollision = false -> true -> run occupy
+                // no time collision -> timeCollision = true -> false -> go to else
+                if(!timeCollision) {
+                    String sqlOccupy = "INSERT INTO occupy " +
+                            "VALUES (?,?,?,?)";
+                    pst = cn.prepareStatement(sqlOccupy);
+                    pst.setString(1, lectureIdField.getText());
+                    pst.setDate(2, Date.valueOf(lectureDatePicker.getValue()));
+                    pst.setTime(3, Time.valueOf(inputTime));
+                    int selectedRoom = roomBox.getSelectionModel().getSelectedIndex();
+                    pst.setString(4, rooms.get(selectedRoom).getRoomId());
+                    pst.executeUpdate();
+
+                    DialogBox.alertBox("Success", lectureTitleField.getText() + " Inserted Successfully");
+
+                    String roomId = "";
+                    String roomName = "";
+                    String roomDescription = "";
+                    int roomSeat = 0;
+                    for(int i=0; i<rooms.size(); i++) {
+                        if(roomBox.getSelectionModel().getSelectedItem().contains(rooms.get(i).getName())) {
+                            roomId = rooms.get(i).getRoomId();
+                            roomName = rooms.get(i).getName();
+                            roomDescription = rooms.get(i).getDescription();
+                            roomSeat = rooms.get(i).getSeat();
+                        }
+                    }
+
+                    Room room = new Room(roomId, roomName, roomDescription, roomSeat);
+                    Lecture lecture = new Lecture(
+                            lectureIdField.getText(),
+                            lectureTitleField.getText(),
+                            room,
+                            Date.valueOf(lectureDatePicker.getValue()),
+                            Time.valueOf(inputTime),
+                            Integer.parseInt(lectureDurationField.getText()));
+
+                    lectures.add(lecture);
+
+                    lectureTable.refresh();
+                } else {
+                    DialogBox.alertBox("Warning", "Room Occupied on this Time, check the Time");
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Warning", e + "");
+            } finally {
+                try {
+                    if(rs != null) {
+                        rs.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "rs");
+                }
+                try {
+                    if(pst != null) {
+                        pst.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "st");
+                }
+                try {
+                    if(cn != null) {
+                        cn.close();
+                    }
+                } catch (Exception e) {
+                    DialogBox.alertBox("Error", e + "cn");
+                }
+            }
+        }
+    }
+
     public void saveRoom() {
         if(isRoomFormEmpty()) {
             DialogBox.alertBox("Warning", "Empty Field is not Allowed");
@@ -1400,6 +1859,33 @@ public class Administrator extends Member {
             return true;
         } else if(companyNameField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "Company Name is Empty");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isLectureFormEmpty() {
+        if(lectureIdField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Lecture ID is Empty");
+            return true;
+        } else if(lectureTitleField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Lecture Title is Empty");
+            return true;
+        } else if(roomBox.getSelectionModel().getSelectedIndex() < 0) {
+            DialogBox.alertBox("Warning", "Lecture Room is not Selected");
+            return true;
+        } else if(lectureDatePicker.getEditor().getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Lecture Date is Empty");
+            return true;
+        } else if(lectureHoursField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Lecture Hours is Empty");
+            return true;
+        } else if(lectureMinutesField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Lecture Minutes is Empty");
+            return true;
+        } else if(lectureDurationField.getText().isEmpty()) {
+            DialogBox.alertBox("Warning", "Lecture Duration is Empty");
             return true;
         } else {
             return false;
@@ -1550,6 +2036,61 @@ public class Administrator extends Member {
             }
         }
         return members;
+    }
+
+    @Override
+    public ObservableList<Lecture> getLectures() {
+        lectures = FXCollections.observableArrayList();
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT lecture.*, occupy.date, occupy.time, room.* " +
+                    "FROM lecture, occupy, room " +
+                    "WHERE (lecture.lectureId = occupy.lectureId AND occupy.roomId = room.roomId)";
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
+            while (rs.next()) {
+
+
+                String lectureId = rs.getString(1);
+                String lectureTitle = rs.getString(2);
+                Room lectureRoom = new Room(rs.getString(6), rs.getString(7),
+                        rs.getString(8), rs.getInt(9));
+                Date lectureDate = rs.getDate(4);
+                Time lectureTime = rs.getTime(5);
+                int lectureDuration = rs.getInt(3);
+
+
+                Lecture lecture = new Lecture(lectureId, lectureTitle, lectureRoom,
+                        lectureDate, lectureTime, lectureDuration);
+
+                lectures.add(lecture);
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            try {
+                if(rs != null) {
+                    rs.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "rs");
+            }
+            try {
+                if(pst != null) {
+                    pst.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "st");
+            }
+            try {
+                if(cn != null) {
+                    cn.close();
+                }
+            } catch (Exception e) {
+                DialogBox.alertBox("Error", e + "cn");
+            }
+        }
+        return lectures;
     }
 
     private ObservableList<Room> getRooms() {
