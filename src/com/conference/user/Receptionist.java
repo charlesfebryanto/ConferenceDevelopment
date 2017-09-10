@@ -277,7 +277,8 @@ public class Receptionist extends Member {
                 pst.setDate(7, Date.valueOf(dobPicker.getValue()));
                 pst.setInt(8, 0);
                 pst.executeUpdate();
-                DialogBox.alertBox("Success", "Visitor " + firstNameField.getText() + " " + lastNameField.getText() + " Successfuly added.");
+                DialogBox.alertBox("Success", "Visitor " + firstNameField.getText() + " " +
+                        lastNameField.getText() + " Successfuly added.");
                 Platform.runLater(() -> {
                     firstNameField.clear();
                     lastNameField.clear();
@@ -321,8 +322,8 @@ public class Receptionist extends Member {
     }
 
     private void insertEngagement() {
-        String tableName = "";
-        String boxId = "";
+        String tableName;
+        String boxId;
         if(engagementGroup.getSelectedToggle() == lectureEngagement) {
             tableName = "attend";
             boxId = lectures.get(selectionBox.getSelectionModel().getSelectedIndex()).getLectureId();
@@ -346,10 +347,12 @@ public class Receptionist extends Member {
                 pst.setString(1, idScanner.getText());
                 pst.setString(2, boxId);
                 pst.executeUpdate();
-                DialogBox.alertBox("Success", idScanner.getText() + " Successfuly Recorded with " + selectionBox.getSelectionModel().getSelectedItem());
+                DialogBox.alertBox("Success", idScanner.getText() + " Successfuly Recorded with " +
+                        selectionBox.getSelectionModel().getSelectedItem());
             } catch (MySQLIntegrityConstraintViolationException e) {
                 if(e.getErrorCode() == 1062) {
-                    DialogBox.alertBox("Error", idScanner.getText() + " already attend/engage the current booth/lecture");
+                    DialogBox.alertBox("Error", idScanner.getText() +
+                            " already attend/engage the current booth/lecture");
                 } else if(e.getErrorCode() == 1452) {
                     DialogBox.alertBox("Error", idScanner.getText() + " is not in the Database");
                 } else {

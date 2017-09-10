@@ -43,4 +43,28 @@ public class Lecture {
     public int getDuration() {
         return duration;
     }
+
+    public void setLectureId(String lectureId) {
+        this.lectureId = lectureId;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public void setTime(Time time) {
+        this.time = time;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
 }
