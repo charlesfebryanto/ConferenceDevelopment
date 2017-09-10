@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Sep 05, 2017 at 08:31 AM
+-- Generation Time: Sep 10, 2017 at 02:20 PM
 -- Server version: 10.1.25-MariaDB
 -- PHP Version: 7.1.7
 
@@ -138,8 +138,6 @@ INSERT INTO `have` (`transactionId`, `productId`, `quantity`) VALUES
 CREATE TABLE `lecture` (
   `lectureId` varchar(20) NOT NULL,
   `title` varchar(20) DEFAULT NULL,
-  `date` date DEFAULT NULL,
-  `time` time NOT NULL,
   `duration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -147,9 +145,10 @@ CREATE TABLE `lecture` (
 -- Dumping data for table `lecture`
 --
 
-INSERT INTO `lecture` (`lectureId`, `title`, `date`, `time`, `duration`) VALUES
-('6567897656', 'Marketing', '2017-09-05', '12:00:00', 60),
-('8675690987', 'Programming', '2017-09-05', '10:00:00', 120);
+INSERT INTO `lecture` (`lectureId`, `title`, `duration`) VALUES
+('123', '123', 120),
+('6567897656', 'Marketing', 120),
+('8675690987', 'Programming', 120);
 
 -- --------------------------------------------------------
 
@@ -178,10 +177,13 @@ INSERT INTO `member` (`memberId`, `firstName`, `lastName`, `gender`, `contactNo`
 ('0000000002', 'Visitor', 'Two', 'M', '123', '123', '2017-09-04', 0),
 ('1111111111', 'Retailer', 'Company One', 'M', '123', '123', '2017-09-12', 1),
 ('1111111112', 'Retailer', 'Company Two', 'M', '123', '123', '2017-09-12', 1),
-('1111111113', 'Retailer', 'Company Three', 'M', '123', '123', '2017-09-04', 1),
 ('1232132132', 'akjsd', 'alskdj', 'M', '123123', '1232', '2017-09-08', 0),
 ('2222222222', 'Receptionist', 'Receptionist', 'M', '123', '123', '2017-09-06', 2),
-('3333333333', 'Admin', 'Admin', 'M', '333333', 'Admin Address', '2017-09-03', 3);
+('3333333333', 'Admin', 'Admin', 'M', '333333', 'Admin Address', '2017-09-03', 3),
+('5675675675', 'Retailer', 'Company Two Two', 'M', '123', '123', '2017-09-13', 1),
+('6546546546', 'Retailer', 'Company One Two', 'M', '123', '213', '2017-09-13', 1),
+('7657657657', 'Retailer', 'Company Two One', 'M', '123', '123', '2017-09-08', 1),
+('8768768768', 'Retailer', 'Company One One', 'M', '123', '123', '2017-09-13', 1);
 
 -- --------------------------------------------------------
 
@@ -190,7 +192,9 @@ INSERT INTO `member` (`memberId`, `firstName`, `lastName`, `gender`, `contactNo`
 --
 
 CREATE TABLE `occupy` (
-  `lectureId` varchar(20) NOT NULL,
+  `lectureId` varchar(20) DEFAULT NULL,
+  `date` date NOT NULL,
+  `time` time NOT NULL,
   `roomId` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -198,9 +202,12 @@ CREATE TABLE `occupy` (
 -- Dumping data for table `occupy`
 --
 
-INSERT INTO `occupy` (`lectureId`, `roomId`) VALUES
-('6567897656', '5679546789'),
-('8675690987', '7867890987');
+INSERT INTO `occupy` (`lectureId`, `date`, `time`, `roomId`) VALUES
+('123', '2017-09-10', '10:00:00', '7867890987'),
+('6567897656', '2017-09-09', '00:00:00', '5679546789'),
+('6567897656', '2017-09-09', '02:00:00', '5679546789'),
+('8675690987', '2017-09-10', '00:00:00', '7867890987'),
+('8675690987', '2017-09-10', '02:00:00', '7867890987');
 
 -- --------------------------------------------------------
 
@@ -218,6 +225,9 @@ CREATE TABLE `own` (
 --
 
 INSERT INTO `own` (`companyId`, `productId`) VALUES
+('5678767890', '127365716235'),
+('5678767890', '239847238947'),
+('5678767890', '91283981273'),
 ('8675656898', '129381293'),
 ('8675656898', '129381923'),
 ('8675656898', '129387192837');
@@ -240,9 +250,12 @@ CREATE TABLE `product` (
 --
 
 INSERT INTO `product` (`productId`, `name`, `price`, `stock`) VALUES
+('127365716235', 'Coke Can', 5, 10),
 ('129381293', 'Fanta Bottle', 5, 2),
 ('129381923', 'Coke Bottle', 5, 3),
-('129387192837', 'Sprite Bottle', 5, 4);
+('129387192837', 'Sprite Bottle', 5, 4),
+('239847238947', 'Sprite Can', 5, 10),
+('91283981273', 'Fanta Can', 5, 10);
 
 -- --------------------------------------------------------
 
@@ -304,7 +317,10 @@ CREATE TABLE `work` (
 
 INSERT INTO `work` (`memberId`, `companyId`) VALUES
 ('1111111112', '5678767890'),
-('1111111111', '8675656898');
+('5675675675', '5678767890'),
+('7657657657', '5678767890'),
+('1111111111', '8675656898'),
+('8768768768', '8675656898');
 
 --
 -- Indexes for dumped tables
@@ -360,7 +376,8 @@ ALTER TABLE `member`
 -- Indexes for table `occupy`
 --
 ALTER TABLE `occupy`
-  ADD PRIMARY KEY (`lectureId`,`roomId`),
+  ADD PRIMARY KEY (`date`,`time`,`roomId`),
+  ADD KEY `lectureId` (`lectureId`),
   ADD KEY `roomId` (`roomId`);
 
 --
