@@ -48,7 +48,8 @@ public class Administrator extends Member {
             companyIdField, companyNameField, searchCompanyField,
             roomIdField, roomNameField, roomDescriptionField, roomSeatField, searchRoomField,
             lectureIdField, lectureTitleField, lectureDurationField, lectureHoursField, lectureMinutesField,
-            searchLectureField;
+            searchLectureField, searchVisitorField, searchReportProductField,
+            searchReportLectureField, searchReportCompanyField;
 
     private TextArea staffAddressField;
     private Button saveStaffButton, editStaffButton, deleteStaffButton, addStaffButton, searchStaffButton,
@@ -60,18 +61,20 @@ public class Administrator extends Member {
     private RadioButton maleRadio, femaleRadio;
     private DatePicker dobPicker, lectureDatePicker;
     private ComboBox<String> positionBox, searchType, searchCompanyType, companyBox, searchRoomType, roomBox,
-            searchLectureType;
+            searchLectureType, searchVisitorType, searchReportProductType,
+            searchReportLectureType, searchReportCompanyType;
 
     private ObservableList<Member> members;
     private ObservableList<Company> companies;
     private ObservableList<Room> rooms;
     private ObservableList<Lecture> lectures;
 
-    private TableView<Member> memberTable, companyStaffTable;
-    private TableView<Company> companyTable;
-    private TableView<Product> companyProductTable;
+    private TableView<Member> memberTable, companyStaffTable, visitorMemberTable;
+    private TableView<Company> companyTable, visitorCompanyTable, reportCompanyTable;
+    private TableView<Product> companyProductTable, visitorProductTable, reportProductTable;
     private TableView<Room> roomTable;
-    private TableView<Lecture> lectureTable;
+    private TableView<Lecture> lectureTable, visitorLectureTable, reportLectureTable;
+    private TableView<Transaction> visitorTransactionTable;
 
     public Administrator(String memberId, String firstName, String lastName, String gender, String contactNumber, String address, Date dob, int position) {
         super(memberId, firstName, lastName, gender, contactNumber, address, dob, position);
@@ -97,7 +100,7 @@ public class Administrator extends Member {
         profile.getItems().addAll(activity, logout);
 
         Menu view = new Menu("View");
-        MenuItem staff = new MenuItem("Staff");
+        MenuItem staff = new MenuItem("Member");
         staff.setOnAction(e -> layout.setCenter(staffView()));
         MenuItem company = new MenuItem("Company");
         company.setOnAction(e -> layout.setCenter(companyView()));
@@ -106,7 +109,9 @@ public class Administrator extends Member {
         MenuItem room = new MenuItem("Room");
         room.setOnAction(e -> layout.setCenter(roomView()));
         MenuItem visitor = new MenuItem("Visitor");
-        MenuItem report = new MenuItem("Report?");
+        visitor.setOnAction(e -> layout.setCenter(visitorView()));
+        MenuItem report = new MenuItem("Report");
+        report.setOnAction(e -> layout.setCenter(reportView()));
 
         view.getItems().addAll(staff, company, lecture, room, visitor, report);
 
@@ -937,6 +942,278 @@ public class Administrator extends Member {
         body.add(lectureFormContainer, 0, 0);
         body.add(lectureButtonContainer, 0, 1);
         body.add(lectureTableContainer, 0, 2);
+
+        return body;
+    }
+
+    private GridPane visitorView() {
+        GridPane body = new GridPane();
+        body.setHgap(10);
+        body.setVgap(10);
+        body.setPadding(new Insets(10));
+
+        GridPane tableContainer = new GridPane();
+        tableContainer.setHgap(10);
+        tableContainer.setVgap(10);
+
+        GridPane searchContainer = new GridPane();
+        searchContainer.setHgap(10);
+
+        Label searchVisitor = new Label("Search : ");
+        searchContainer.add(searchVisitor, 0, 0);
+
+        searchVisitorField = new TextField();
+        searchVisitorField.setPromptText("Insert Something");
+        searchVisitorField.setPrefWidth(200);
+        searchVisitorField.textProperty().addListener(e -> searchLecture());
+        searchContainer.add(searchVisitorField, 1, 0);
+
+        searchVisitorType = new ComboBox<>();
+        searchVisitorType.getItems().addAll("memberID", "Name");
+        searchVisitorType.getSelectionModel().select(1);
+        searchContainer.add(searchVisitorType, 2, 0);
+
+        Button searchVisitorButton = new Button("Search");
+        searchVisitorButton.setOnAction(e -> searchLecture());
+        searchContainer.add(searchVisitorButton, 3, 0);
+
+
+
+        TableColumn<Member, String> memberIdColumn = new TableColumn<>("Member ID");
+        memberIdColumn.setCellValueFactory(new PropertyValueFactory<>("memberId"));
+
+        TableColumn<Member, String> memberFirstNameColumn = new TableColumn<>("First Name");
+        memberFirstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+
+
+        TableColumn<Member, String> memberLastNameColumn = new TableColumn<>("Last Name");
+        memberLastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+
+        visitorMemberTable = new TableView<>();
+        visitorMemberTable.getColumns().addAll(memberIdColumn, memberFirstNameColumn, memberLastNameColumn);
+        tableContainer.add(visitorMemberTable, 0, 0);
+
+        TableColumn<Transaction, String> transactionIdColumn = new TableColumn<>("Transaction ID");
+        transactionIdColumn.setCellValueFactory(new PropertyValueFactory<>("transactionId"));
+
+        TableColumn<Transaction, Double> transactionTotalColumn = new TableColumn<>("Total");
+        transactionTotalColumn.setCellValueFactory(new PropertyValueFactory<>("total"));
+
+        TableColumn<Transaction, Date> transactionDateColumn = new TableColumn<>("Date");
+        transactionDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
+
+        visitorTransactionTable = new TableView();
+        visitorTransactionTable.getColumns().addAll(transactionIdColumn, transactionTotalColumn, transactionDateColumn);
+        tableContainer.add(visitorTransactionTable, 1, 0);
+
+        TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
+        productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Product, Double> productPriceColumn = new TableColumn<>("Price");
+        productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        TableColumn<Product, Integer> productQuantityColumn = new TableColumn<>("Quantity");
+        productQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+
+        visitorProductTable = new TableView<>();
+        visitorProductTable.getColumns().addAll(productNameColumn, productPriceColumn, productQuantityColumn);
+        tableContainer.add(visitorProductTable, 2, 0);
+
+
+        GridPane tableEngagementContainer = new GridPane();
+        tableEngagementContainer.setHgap(10);
+
+        TableColumn<Lecture, String> lectureIdColumn = new TableColumn<>("Lecture ID");
+        lectureIdColumn.setCellValueFactory(new PropertyValueFactory<>("lectureId"));
+
+        TableColumn<Lecture, String> lectureTitleColumn = new TableColumn<>("Lecture Title");
+        lectureTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+
+        TableColumn<Lecture, String> lectureRoomColumn = new TableColumn<>("Room");
+        lectureRoomColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Lecture, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<Lecture, String> p) {
+                return new SimpleStringProperty(p.getValue().getRoom().getName());
+            }
+        });
+
+        TableColumn<Lecture, Date> lectureDateColumn = new TableColumn<>("Date");
+        lectureDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
+
+        TableColumn<Lecture, Time> lectureTimeColumn = new TableColumn<>("Time");
+        lectureTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
+
+        TableColumn<Lecture, Integer> lectureDurationColumn = new TableColumn<>("Duration");
+        lectureDurationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
+
+        visitorLectureTable = new TableView<>();
+        visitorLectureTable.getColumns().addAll(lectureTitleColumn, lectureRoomColumn, lectureDateColumn,
+                lectureTimeColumn, lectureDurationColumn);
+
+        tableEngagementContainer.add(visitorLectureTable, 0, 0);
+
+        TableColumn<Company, String> companyIdColumn = new TableColumn<>("Company ID");
+        companyIdColumn.setCellValueFactory(new PropertyValueFactory<>("companyId"));
+
+        TableColumn<Company, String> companyNameColumn = new TableColumn<>("Name");
+        companyNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        visitorCompanyTable = new TableView<>();
+        visitorCompanyTable.getColumns().addAll(companyIdColumn, companyNameColumn);
+        tableEngagementContainer.add(visitorCompanyTable, 1, 0);
+
+
+        body.add(searchContainer, 0, 0);
+        body.add(tableContainer, 0, 1);
+        body.add(tableEngagementContainer, 0, 2);
+        return body;
+    }
+
+    private GridPane reportView() {
+        GridPane body = new GridPane();
+        body.setHgap(10);
+        body.setVgap(10);
+
+        GridPane tableProductContainer = new GridPane();
+
+        GridPane searchProductContainer = new GridPane();
+        searchProductContainer.setHgap(10);
+
+        Label searchProduct = new Label("Search : ");
+        searchProductContainer.add(searchProduct, 0, 0);
+
+        searchReportProductField = new TextField();
+        searchReportProductField.setPromptText("Insert Something");
+        searchReportProductField.setPrefWidth(200);
+        searchReportProductField.textProperty().addListener(e -> searchLecture());
+        searchProductContainer.add(searchReportProductField, 1, 0);
+
+        searchReportProductType = new ComboBox<>();
+        searchReportProductType.getItems().addAll("productID", "Name");
+        searchReportProductType.getSelectionModel().select(1);
+        searchProductContainer.add(searchReportProductType, 2, 0);
+
+        Button searchReportProductButton = new Button("Search");
+        searchReportProductButton.setOnAction(e -> searchLecture());
+        searchProductContainer.add(searchReportProductButton, 3, 0);
+
+        TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
+        productIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Product, Double> productPriceColumn = new TableColumn<>("Price");
+        productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        TableColumn<Product, Integer> productQuantityColumn = new TableColumn<>("Quantity");
+        productQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+
+        reportProductTable = new TableView<>();
+        reportProductTable.getColumns().addAll(productIdColumn, productNameColumn,
+                productPriceColumn, productQuantityColumn);
+        tableProductContainer.add(searchProductContainer, 0, 0);
+        tableProductContainer.add(reportProductTable, 0, 1);
+
+
+        GridPane tableLectureContainer = new GridPane();
+
+        GridPane searchLectureContainer = new GridPane();
+        searchLectureContainer.setHgap(10);
+
+        Label searchLecture = new Label("Search : ");
+        searchLectureContainer.add(searchLecture, 0, 0);
+
+        searchReportLectureField = new TextField();
+        searchReportLectureField.setPromptText("Insert Something");
+        searchReportLectureField.setPrefWidth(200);
+        searchReportLectureField.textProperty().addListener(e -> searchLecture());
+        searchLectureContainer.add(searchReportLectureField, 1, 0);
+
+        searchReportLectureType = new ComboBox<>();
+        searchReportLectureType.getItems().addAll("lectureID", "Name");
+        searchReportLectureType.getSelectionModel().select(1);
+        searchLectureContainer.add(searchReportLectureType, 2, 0);
+
+        Button searchReportLectureButton = new Button("Search");
+        searchReportLectureButton.setOnAction(e -> searchLecture());
+        searchLectureContainer.add(searchReportLectureButton, 3, 0);
+
+
+        TableColumn<Lecture, String> lectureIdColumn = new TableColumn<>("Lecture ID");
+        lectureIdColumn.setCellValueFactory(new PropertyValueFactory<>("lectureId"));
+
+        TableColumn<Lecture, String> lectureTitleColumn = new TableColumn<>("Lecture Title");
+        lectureTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+
+        TableColumn<Lecture, String> lectureRoomColumn = new TableColumn<>("Room");
+        lectureRoomColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Lecture, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<Lecture, String> p) {
+                return new SimpleStringProperty(p.getValue().getRoom().getName());
+            }
+        });
+
+        TableColumn<Lecture, Date> lectureDateColumn = new TableColumn<>("Date");
+        lectureDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
+
+        TableColumn<Lecture, Time> lectureTimeColumn = new TableColumn<>("Time");
+        lectureTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
+
+        TableColumn<Lecture, Integer> lectureDurationColumn = new TableColumn<>("Duration");
+        lectureDurationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
+
+        reportLectureTable = new TableView<>();
+        reportLectureTable.getColumns().addAll(lectureIdColumn, lectureTitleColumn, lectureRoomColumn,
+                lectureDateColumn, lectureTimeColumn, lectureDurationColumn);
+
+        tableLectureContainer.add(searchLectureContainer, 0, 0);
+        tableLectureContainer.add(reportLectureTable, 0, 1);
+
+        GridPane tableCompanyContainer = new GridPane();
+
+        GridPane searchCompanyContainer = new GridPane();
+        searchCompanyContainer.setHgap(10);
+
+        Label searchCompany = new Label("Search : ");
+        searchCompanyContainer.add(searchCompany, 0, 0);
+
+        searchReportCompanyField = new TextField();
+        searchReportCompanyField.setPromptText("Insert Something");
+        searchReportCompanyField.setPrefWidth(200);
+        searchReportCompanyField.textProperty().addListener(e -> searchLecture());
+        searchCompanyContainer.add(searchReportCompanyField, 1, 0);
+
+        searchReportCompanyType = new ComboBox<>();
+        searchReportCompanyType.getItems().addAll("companyID", "Name");
+        searchReportCompanyType.getSelectionModel().select(1);
+        searchCompanyContainer.add(searchReportCompanyType, 2, 0);
+
+        Button searchReportCompanyButton = new Button("Search");
+        searchReportCompanyButton.setOnAction(e -> searchLecture());
+        searchCompanyContainer.add(searchReportCompanyButton, 3, 0);
+
+
+        TableColumn<Company, String> companyIdColumn = new TableColumn<>("Company ID");
+        companyIdColumn.setCellValueFactory(new PropertyValueFactory<>("companyId"));
+
+        TableColumn<Company, String> companyNameColumn = new TableColumn<>("Name");
+        companyNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        reportCompanyTable = new TableView<>();
+        reportCompanyTable.getColumns().addAll(companyIdColumn, companyNameColumn);
+
+        tableCompanyContainer.add(searchCompanyContainer, 0, 0);
+        tableCompanyContainer.add(reportCompanyTable, 0, 1);
+
+
+
+        body.add(tableProductContainer, 0, 0);
+        body.add(tableLectureContainer, 0, 1);
+        body.add(tableCompanyContainer, 0, 2);
 
         return body;
     }
@@ -2178,8 +2455,7 @@ public class Administrator extends Member {
             cn = MySQL.connect();
             String sql = "SELECT * " +
                     "FROM member " +
-                    "WHERE position > 0 " +
-                    "ORDER BY position ASC";
+                    "ORDER BY position DESC";
             pst = cn.prepareStatement(sql);
             rs = pst.executeQuery();
             while(rs.next()) {
