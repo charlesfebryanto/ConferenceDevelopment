@@ -43,9 +43,9 @@ public class Member {
     private int position;
 
     private Label transactionIdValue, transactionTotalValue, transactionDateValue;
-    private ObservableList<Transaction> transactions;
-    private ObservableList<Lecture> lectures;
-    private ObservableList<Company> companies;
+    protected ObservableList<Transaction> transactions;
+    protected ObservableList<Lecture> lectures;
+    protected ObservableList<Company> companies;
 
     private TableView<Transaction> transactionTable;
     private TableView<Product> productTable;
@@ -116,7 +116,7 @@ public class Member {
     }
 
     public GridPane productPurchasedView() {
-        getTransactions();
+        getTransactions(getMemberId());
 
         GridPane body = new GridPane();
         body.setVgap(10);
@@ -197,8 +197,8 @@ public class Member {
     }
 
     public GridPane engagementHistoryView() {
-        getLectures();
-        getCompanies();
+        getLectures(getMemberId());
+        getCompanies(getMemberId());
 
         GridPane body = new GridPane();
         body.setVgap(10);
@@ -291,7 +291,7 @@ public class Member {
         Platform.runLater(() -> transactionTable.getSelectionModel().clearSelection());
     }
 
-    public ObservableList<Company> getCompanies() {
+    public ObservableList<Company> getCompanies(String memberId) {
         try {
             companies = FXCollections.observableArrayList();
             cn = MySQL.connect();
@@ -301,7 +301,7 @@ public class Member {
                     "AND member.memberId = ? " +
                     "ORDER BY company.name ASC";
             pst = cn.prepareStatement(sql);
-            pst.setString(1, getMemberId());
+            pst.setString(1, memberId);
             rs = pst.executeQuery();
             while(rs.next()) {
                 String companyId = rs.getString(1);
@@ -338,7 +338,7 @@ public class Member {
         return companies;
     }
 
-    public ObservableList<Lecture> getLectures() {
+    public ObservableList<Lecture> getLectures(String memberId) {
          try {
              lectures = FXCollections.observableArrayList();
              cn = MySQL.connect();
@@ -351,7 +351,7 @@ public class Member {
                      "ORDER BY occupy.date, occupy.time ASC";
 
              pst = cn.prepareStatement(sql);
-             pst.setString(1, getMemberId());
+             pst.setString(1, memberId);
              rs = pst.executeQuery();
              while(rs.next()) {
                  String lectureId = rs.getString(1);
@@ -399,7 +399,7 @@ public class Member {
          return lectures;
     }
 
-    public ObservableList<Transaction> getTransactions() {
+    public ObservableList<Transaction> getTransactions(String memberId) {
         try {
             transactions = FXCollections.observableArrayList();
             cn = MySQL.connect();
@@ -408,7 +408,7 @@ public class Member {
                     "WHERE (t.transactionId = do.transactionId AND do.memberId = member.memberId) " +
                     "AND member.memberId = ?";
             pst = cn.prepareStatement(sqlTransaction);
-            pst.setString(1, getMemberId());
+            pst.setString(1, memberId);
             rs = pst.executeQuery();
 
             // loop the transaction

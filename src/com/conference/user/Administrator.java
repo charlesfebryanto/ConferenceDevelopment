@@ -276,13 +276,13 @@ public class Administrator extends Member {
         searchField = new TextField();
         searchField.setPromptText("Insert Something");
         searchField.setPrefWidth(200);
-        searchField.textProperty().addListener(e -> searchStaff());
+        searchField.textProperty().addListener(e -> searchStaff(memberTable, searchType, searchField));
 
         searchType = new ComboBox<>();
         searchType.getItems().addAll("memberID", "Name");
         searchType.getSelectionModel().select(1);
         searchStaffButton = new Button("Search");
-        searchStaffButton.setOnAction(e -> searchStaff());
+        searchStaffButton.setOnAction(e -> searchStaff(memberTable, searchType, searchField));
 
         searchContainer.getChildren().addAll(search, searchField, searchType, searchStaffButton);
 
@@ -505,6 +505,9 @@ public class Administrator extends Member {
             editCompanyButton.setDisable(false);
             deleteCompanyButton.setDisable(false);
             companyIdField.setDisable(true);
+            // company have products and staff
+            // save value inside variable
+            // set the value of the table
             ObservableList<Product> selectedCompanyProducts = companyTable.getSelectionModel().getSelectedItem().getProducts();
             ObservableList<Member> selectedCompanyStaff = companyTable.getSelectionModel().getSelectedItem().getStaff();
             companyIdField.setText(companyTable.getSelectionModel().getSelectedItem().getCompanyId());
@@ -947,6 +950,8 @@ public class Administrator extends Member {
     }
 
     private GridPane visitorView() {
+        getMembers();
+
         GridPane body = new GridPane();
         body.setHgap(10);
         body.setVgap(10);
@@ -965,7 +970,8 @@ public class Administrator extends Member {
         searchVisitorField = new TextField();
         searchVisitorField.setPromptText("Insert Something");
         searchVisitorField.setPrefWidth(200);
-        searchVisitorField.textProperty().addListener(e -> searchLecture());
+        searchVisitorField.textProperty().addListener(e -> searchStaff(visitorMemberTable, searchVisitorType,
+                searchVisitorField));
         searchContainer.add(searchVisitorField, 1, 0);
 
         searchVisitorType = new ComboBox<>();
@@ -974,7 +980,8 @@ public class Administrator extends Member {
         searchContainer.add(searchVisitorType, 2, 0);
 
         Button searchVisitorButton = new Button("Search");
-        searchVisitorButton.setOnAction(e -> searchLecture());
+        searchVisitorButton.setOnAction(e -> searchStaff(visitorMemberTable, searchVisitorType,
+                searchVisitorField));
         searchContainer.add(searchVisitorButton, 3, 0);
 
 
@@ -991,6 +998,23 @@ public class Administrator extends Member {
 
         visitorMemberTable = new TableView<>();
         visitorMemberTable.getColumns().addAll(memberIdColumn, memberFirstNameColumn, memberLastNameColumn);
+        visitorMemberTable.getSelectionModel().selectedItemProperty().addListener(e -> {
+//            System.out.println(visitorMemberTable.getSelectionModel().getSelectedItem().getMemberId());
+            String selectedMemberId = visitorMemberTable.getSelectionModel().getSelectedItem().getMemberId();
+
+            // thank you inheritance
+            super.getCompanies(selectedMemberId);
+            visitorCompanyTable.setItems(super.companies);
+            super.getLectures(selectedMemberId);
+            visitorLectureTable.setItems(super.lectures);
+            super.getTransactions(selectedMemberId);
+            visitorTransactionTable.setItems(super.transactions);
+
+            visitorProductTable.getItems().clear();
+
+        });
+        visitorMemberTable.setItems(members);
+
         tableContainer.add(visitorMemberTable, 0, 0);
 
         TableColumn<Transaction, String> transactionIdColumn = new TableColumn<>("Transaction ID");
@@ -1004,6 +1028,9 @@ public class Administrator extends Member {
 
         visitorTransactionTable = new TableView();
         visitorTransactionTable.getColumns().addAll(transactionIdColumn, transactionTotalColumn, transactionDateColumn);
+        visitorTransactionTable.getSelectionModel().selectedItemProperty().addListener(e -> {
+                showTransactionDetails();
+        });
         tableContainer.add(visitorTransactionTable, 1, 0);
 
         TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
@@ -1315,7 +1342,7 @@ public class Administrator extends Member {
         }
     }
 
-    public void searchStaff() {
+    public void searchStaff(TableView<Member> memberTable, ComboBox<String> searchType, TextField searchField) {
         // declare local scope observable product
         ObservableList<Member> searchStaff = FXCollections.observableArrayList();
         if(searchType.getSelectionModel().getSelectedItem().equals("Name")){
@@ -2369,7 +2396,7 @@ public class Administrator extends Member {
         }
     }
 
-    @Override
+//    @Override
     public ObservableList<Company> getCompanies() {
         companies = FXCollections.observableArrayList();
         try {
@@ -2496,7 +2523,7 @@ public class Administrator extends Member {
         return members;
     }
 
-    @Override
+//    @Override
     public ObservableList<Lecture> getLectures() {
         lectures = FXCollections.observableArrayList();
         try {
@@ -2594,5 +2621,26 @@ public class Administrator extends Member {
             }
         }
         return rooms;
+    }
+
+    @Override
+    public void showTransactionDetails() {
+        int selectedIndex = visitorTransactionTable.getSelectionModel().getSelectedIndex();
+        ObservableList<Product> selectedTransactionProducts = visitorTransactionTable.getItems().get(selectedIndex).getProducts();
+//        transactionIdValue.setText(transactionTable.getItems().get(selectedIndex).getTransactionId());
+//        transactionTotalValue.setText(transactionTable.getItems().get(selectedIndex).getTotal() + "");
+//        transactionDateValue.setText(transactionTable.getItems().get(selectedIndex).getDate() + "");
+        ObservableList<Product> products = FXCollections.observableArrayList();
+        for(int i=0; i<selectedTransactionProducts.size(); i++) {
+
+            Product product = new Product(selectedTransactionProducts.get(i).getProductId(),
+                    selectedTransactionProducts.get(i).getName(),
+                    selectedTransactionProducts.get(i).getPrice(),
+                    selectedTransactionProducts.get(i).getStock());
+
+            products.add(product);
+        }
+        visitorProductTable.setItems(products);
+        Platform.runLater(() -> visitorTransactionTable.getSelectionModel().clearSelection());
     }
 }

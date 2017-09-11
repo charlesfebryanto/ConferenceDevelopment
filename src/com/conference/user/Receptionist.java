@@ -394,7 +394,7 @@ public class Receptionist extends Member {
         Platform.runLater(() -> idScanner.clear());
     }
 
-    @Override
+//    @Override
     public ObservableList<Company> getCompanies() {
         companies = FXCollections.observableArrayList();
         try {
@@ -437,7 +437,7 @@ public class Receptionist extends Member {
     }
 
     // this getLectures() based on the date, check the query
-    @Override
+//    @Override
     public ObservableList<Lecture> getLectures() {
         lectures = FXCollections.observableArrayList();
         try {
