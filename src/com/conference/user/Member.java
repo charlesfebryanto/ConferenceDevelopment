@@ -342,12 +342,13 @@ public class Member {
          try {
              lectures = FXCollections.observableArrayList();
              cn = MySQL.connect();
-             String sql = "SELECT lecture.*, room.* " +
+             String sql = "SELECT lecture.lectureId, lecture.title, occupy.date, occupy.time, lecture.duration, " +
+                     "room.roomId, room.name, room.description, room.seat " +
                      "FROM member, attend, lecture, occupy, room " +
                      "WHERE (member.memberId = attend.memberId AND attend.lectureId = lecture.lectureId) " +
                      "AND (lecture.lectureId = occupy.lectureId AND occupy.roomId = room.roomId) " +
                      "AND member.memberId = ? " +
-                     "ORDER BY lecture.date, lecture.time ASC";
+                     "ORDER BY occupy.date, occupy.time ASC";
 
              pst = cn.prepareStatement(sql);
              pst.setString(1, getMemberId());
