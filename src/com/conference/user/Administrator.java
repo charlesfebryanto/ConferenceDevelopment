@@ -65,9 +65,10 @@ public class Administrator extends Member {
             searchReportLectureType, searchReportCompanyType;
 
     private ObservableList<Member> members;
-    private ObservableList<Company> companies;
+    private ObservableList<Company> companies, engagements;
     private ObservableList<Room> rooms;
-    private ObservableList<Lecture> lectures;
+    private ObservableList<Lecture> lectures, attends;
+    private ObservableList<Product> sold;
 
     private TableView<Member> memberTable, companyStaffTable, visitorMemberTable;
     private TableView<Company> companyTable, visitorCompanyTable, reportCompanyTable;
@@ -470,13 +471,13 @@ public class Administrator extends Member {
         searchCompanyField = new TextField();
         searchCompanyField.setPromptText("Insert Something");
         searchCompanyField.setPrefWidth(200);
-        searchCompanyField.textProperty().addListener(e -> searchCompany());
+        searchCompanyField.textProperty().addListener(e -> searchCompany(companyTable, companies, searchCompanyType, searchCompanyField));
 
         searchCompanyType = new ComboBox<>();
         searchCompanyType.getItems().addAll("companyID", "Name");
         searchCompanyType.getSelectionModel().select(1);
         searchCompanyButton = new Button("Search");
-        searchCompanyButton.setOnAction(e -> searchCompany());
+        searchCompanyButton.setOnAction(e -> searchCompany(companyTable, companies, searchCompanyType, searchCompanyField));
 
         searchContainer.getChildren().addAll(searchCompany, searchCompanyField,
                 searchCompanyType, searchCompanyButton);
@@ -862,7 +863,7 @@ public class Administrator extends Member {
         searchLectureField = new TextField();
         searchLectureField.setPromptText("Insert Something");
         searchLectureField.setPrefWidth(200);
-        searchLectureField.textProperty().addListener(e -> searchLecture());
+        searchLectureField.textProperty().addListener(e -> searchLecture(lectureTable, lectures, searchLectureType, searchLectureField));
         searchContainer.add(searchLectureField, 1, 0);
 
         searchLectureType = new ComboBox<>();
@@ -871,7 +872,7 @@ public class Administrator extends Member {
         searchContainer.add(searchLectureType, 2, 0);
 
         Button searchLectureButton = new Button("Search");
-        searchLectureButton.setOnAction(e -> searchLecture());
+        searchLectureButton.setOnAction(e -> searchLecture(lectureTable, lectures, searchLectureType, searchLectureField));
         searchContainer.add(searchLectureButton, 3, 0);
 
 
@@ -1100,6 +1101,10 @@ public class Administrator extends Member {
     }
 
     private GridPane reportView() {
+        getProductSold();
+        getCompanyEngagements();
+        getLectureAttendance();
+
         GridPane body = new GridPane();
         body.setHgap(10);
         body.setVgap(10);
@@ -1115,7 +1120,7 @@ public class Administrator extends Member {
         searchReportProductField = new TextField();
         searchReportProductField.setPromptText("Insert Something");
         searchReportProductField.setPrefWidth(200);
-        searchReportProductField.textProperty().addListener(e -> searchLecture());
+        searchReportProductField.textProperty().addListener(e -> searchProduct(reportProductTable, sold, searchReportProductType, searchReportProductField));
         searchProductContainer.add(searchReportProductField, 1, 0);
 
         searchReportProductType = new ComboBox<>();
@@ -1124,7 +1129,7 @@ public class Administrator extends Member {
         searchProductContainer.add(searchReportProductType, 2, 0);
 
         Button searchReportProductButton = new Button("Search");
-        searchReportProductButton.setOnAction(e -> searchLecture());
+        searchReportProductButton.setOnAction(e -> searchProduct(reportProductTable, sold, searchReportProductType, searchReportProductField));
         searchProductContainer.add(searchReportProductButton, 3, 0);
 
         TableColumn<Product, String> productIdColumn = new TableColumn<>("Product ID");
@@ -1133,15 +1138,12 @@ public class Administrator extends Member {
         TableColumn<Product, String> productNameColumn = new TableColumn<>("Product Name");
         productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<Product, Double> productPriceColumn = new TableColumn<>("Price");
-        productPriceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-
-        TableColumn<Product, Integer> productQuantityColumn = new TableColumn<>("Quantity");
-        productQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+        TableColumn<Product, Integer> productSoldColumn = new TableColumn<>("Sold");
+        productSoldColumn.setCellValueFactory(new PropertyValueFactory<>("sold"));
 
         reportProductTable = new TableView<>();
-        reportProductTable.getColumns().addAll(productIdColumn, productNameColumn,
-                productPriceColumn, productQuantityColumn);
+        reportProductTable.getColumns().addAll(productIdColumn, productNameColumn, productSoldColumn);
+        reportProductTable.setItems(sold);
         tableProductContainer.add(searchProductContainer, 0, 0);
         tableProductContainer.add(reportProductTable, 0, 1);
 
@@ -1157,16 +1159,16 @@ public class Administrator extends Member {
         searchReportLectureField = new TextField();
         searchReportLectureField.setPromptText("Insert Something");
         searchReportLectureField.setPrefWidth(200);
-        searchReportLectureField.textProperty().addListener(e -> searchLecture());
+        searchReportLectureField.textProperty().addListener(e -> searchLecture(reportLectureTable, attends, searchReportLectureType, searchReportLectureField));
         searchLectureContainer.add(searchReportLectureField, 1, 0);
 
         searchReportLectureType = new ComboBox<>();
-        searchReportLectureType.getItems().addAll("lectureID", "Name");
+        searchReportLectureType.getItems().addAll("lectureID", "Title");
         searchReportLectureType.getSelectionModel().select(1);
         searchLectureContainer.add(searchReportLectureType, 2, 0);
 
         Button searchReportLectureButton = new Button("Search");
-        searchReportLectureButton.setOnAction(e -> searchLecture());
+        searchReportLectureButton.setOnAction(e -> searchLecture(reportLectureTable, attends, searchReportLectureType, searchReportLectureField));
         searchLectureContainer.add(searchReportLectureButton, 3, 0);
 
 
@@ -1176,26 +1178,12 @@ public class Administrator extends Member {
         TableColumn<Lecture, String> lectureTitleColumn = new TableColumn<>("Lecture Title");
         lectureTitleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
 
-        TableColumn<Lecture, String> lectureRoomColumn = new TableColumn<>("Room");
-        lectureRoomColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Lecture, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<Lecture, String> p) {
-                return new SimpleStringProperty(p.getValue().getRoom().getName());
-            }
-        });
-
-        TableColumn<Lecture, Date> lectureDateColumn = new TableColumn<>("Date");
-        lectureDateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
-
-        TableColumn<Lecture, Time> lectureTimeColumn = new TableColumn<>("Time");
-        lectureTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
-
-        TableColumn<Lecture, Integer> lectureDurationColumn = new TableColumn<>("Duration");
-        lectureDurationColumn.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        TableColumn<Lecture, Integer> lectureAttendColumn = new TableColumn<>("People(s)");
+        lectureAttendColumn.setCellValueFactory(new PropertyValueFactory<>("attends"));
 
         reportLectureTable = new TableView<>();
-        reportLectureTable.getColumns().addAll(lectureIdColumn, lectureTitleColumn, lectureRoomColumn,
-                lectureDateColumn, lectureTimeColumn, lectureDurationColumn);
+        reportLectureTable.getColumns().addAll(lectureIdColumn, lectureTitleColumn, lectureAttendColumn);
+        reportLectureTable.setItems(attends);
 
         tableLectureContainer.add(searchLectureContainer, 0, 0);
         tableLectureContainer.add(reportLectureTable, 0, 1);
@@ -1211,7 +1199,7 @@ public class Administrator extends Member {
         searchReportCompanyField = new TextField();
         searchReportCompanyField.setPromptText("Insert Something");
         searchReportCompanyField.setPrefWidth(200);
-        searchReportCompanyField.textProperty().addListener(e -> searchLecture());
+        searchReportCompanyField.textProperty().addListener(e -> searchCompany(reportCompanyTable, engagements, searchReportCompanyType, searchReportCompanyField));
         searchCompanyContainer.add(searchReportCompanyField, 1, 0);
 
         searchReportCompanyType = new ComboBox<>();
@@ -1220,7 +1208,7 @@ public class Administrator extends Member {
         searchCompanyContainer.add(searchReportCompanyType, 2, 0);
 
         Button searchReportCompanyButton = new Button("Search");
-        searchReportCompanyButton.setOnAction(e -> searchLecture());
+        searchReportCompanyButton.setOnAction(e -> searchCompany(reportCompanyTable, engagements, searchReportCompanyType, searchReportCompanyField));
         searchCompanyContainer.add(searchReportCompanyButton, 3, 0);
 
 
@@ -1230,8 +1218,13 @@ public class Administrator extends Member {
         TableColumn<Company, String> companyNameColumn = new TableColumn<>("Name");
         companyNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
+        TableColumn<Company, String> companyEngagementColumn = new TableColumn<>("People(s)");
+        companyEngagementColumn.setCellValueFactory(new PropertyValueFactory<>("engagements"));
+
+
         reportCompanyTable = new TableView<>();
-        reportCompanyTable.getColumns().addAll(companyIdColumn, companyNameColumn);
+        reportCompanyTable.getColumns().addAll(companyIdColumn, companyNameColumn, companyEngagementColumn);
+        reportCompanyTable.setItems(engagements);
 
         tableCompanyContainer.add(searchCompanyContainer, 0, 0);
         tableCompanyContainer.add(reportCompanyTable, 0, 1);
@@ -1575,7 +1568,8 @@ public class Administrator extends Member {
         }
     }
 
-    private void searchLecture() {
+    private void searchLecture(TableView<Lecture> lectureTable, ObservableList<Lecture> lectures,
+                               ComboBox<String> searchLectureType, TextField searchLectureField) {
         ObservableList<Lecture> searchLecture = FXCollections.observableArrayList();
         String searchLectureValue = searchLectureField.getText().toLowerCase();
         if(searchLectureType.getSelectionModel().getSelectedItem().equals("Title")) {
@@ -1621,14 +1615,15 @@ public class Administrator extends Member {
         roomTable.setItems(searchRoom);
     }
 
-    public void searchCompany() {
+    public void searchCompany(TableView<Company> companyTable, ObservableList<Company> companies, ComboBox<String> searchCompanyType,
+                                  TextField searchCompanyField) {
         // declare local scope observable product
         ObservableList<Company> searchCompany = FXCollections.observableArrayList();
         String searchCompanyValue = searchCompanyField.getText().toLowerCase();
         if(searchCompanyType.getSelectionModel().getSelectedItem().equals("Name")){
 //            String name = searchCompanyField.getText().toLowerCase();
             for(int i=0; i<companies.size(); i++) {
-                if(companies.get(i).getName().toLowerCase().contains(searchCompanyValue)) {
+                if (companies.get(i).getName().toLowerCase().contains(searchCompanyValue)) {
                     searchCompany.add(companies.get(i));
                 }
             }
@@ -1643,6 +1638,31 @@ public class Administrator extends Member {
         }
         // set product table with item from search product observable
         companyTable.setItems(searchCompany);
+    }
+
+    public void searchProduct(TableView<Product> productTable, ObservableList<Product> products, ComboBox<String> searchProductType,
+                              TextField searchProductField) {
+        // declare local scope observable product
+        ObservableList<Product> searchProduct = FXCollections.observableArrayList();
+        String searchProductValue = searchProductField.getText().toLowerCase();
+        if(searchProductType.getSelectionModel().getSelectedItem().equals("Name")){
+//            String name = searchCompanyField.getText().toLowerCase();
+            for(int i=0; i<products.size(); i++) {
+                if(products.get(i).getName().toLowerCase().contains(searchProductValue)) {
+                    searchProduct.add(products.get(i));
+                }
+            }
+        } else {
+            // search for Id
+//            String id = searchCompanyField.getText().toLowerCase();
+            for(int i=0; i<products.size(); i++) {
+                if(products.get(i).getProductId().toLowerCase().contains(searchProductValue)) {
+                    searchProduct.add(products.get(i));
+                }
+            }
+        }
+        // set product table with item from search product observable
+        productTable.setItems(searchProduct);
     }
 
     private void addLecture() {
@@ -2394,6 +2414,95 @@ public class Administrator extends Member {
         } else {
             return false;
         }
+    }
+
+    /*
+SELECT have.productId, product.name, SUM(have.quantity) AS "Total Sold"
+FROM have, product
+WHERE have.productId = product.productId
+GROUP BY have.productId
+
+SELECT attend.lectureId, lecture.title, COUNT(attend.lectureId) AS "People(s)"
+FROM attend, lecture
+WHERE attend.lectureId = lecture.lectureId
+GROUP BY attend.lectureId
+
+SELECT engage.companyId, company.name, COUNT(engage.companyId) AS "People(s)"
+FROM engage, company
+WHERE company.companyId = engage.companyId
+GROUP BY engage.companyId
+
+
+ */
+    public ObservableList<Lecture> getLectureAttendance() {
+        attends = FXCollections.observableArrayList();
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT attend.lectureId, lecture.title, COUNT(attend.lectureId) " +
+                "FROM attend, lecture " +
+                "WHERE attend.lectureId = lecture.lectureId " +
+                "GROUP BY attend.lectureId";
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
+            while(rs.next()) {
+                Lecture lecture = new Lecture(rs.getString(1),
+                        rs.getString(2),
+                        rs.getInt(3));
+                attends.add(lecture);
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            closeConnection();
+        }
+        return attends;
+    }
+    public ObservableList<Company> getCompanyEngagements() {
+        engagements = FXCollections.observableArrayList();
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT engage.companyId, company.name, COUNT(engage.companyId) " +
+                "FROM engage, company " +
+                "WHERE company.companyId = engage.companyId " +
+                "GROUP BY engage.companyId";
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
+            while(rs.next()) {
+                Company company = new Company(rs.getString(1),
+                        rs.getString(2),
+                        rs.getInt(3));
+                engagements.add(company);
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            closeConnection();
+        }
+        return engagements;
+    }
+
+    public ObservableList<Product> getProductSold() {
+       sold = FXCollections.observableArrayList();
+        try {
+            cn = MySQL.connect();
+            String sql = "SELECT have.productId, product.name, SUM(have.quantity) " +
+                "FROM have, product " +
+                "WHERE have.productId = product.productId " +
+                "GROUP BY have.productId";
+            pst = cn.prepareStatement(sql);
+            rs = pst.executeQuery();
+            while(rs.next()) {
+               Product product = new Product(rs.getString(1),
+                        rs.getString(2),
+                        rs.getInt(3));
+                sold.add(product);
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Warning", e + "");
+        } finally {
+            super.closeConnection();
+        }
+        return sold;
     }
 
 //    @Override

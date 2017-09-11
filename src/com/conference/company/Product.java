@@ -5,20 +5,29 @@ public class Product {
     private String name;
     private double price;
     private int stock;
+    private int sold;
+
+
+
+    public Product(String productId, String name, int sold) {
+        this.productId = productId;
+        this.name = name;
+        this.sold = sold;
+        price = 0;
+        stock = 0;
+
+    }
 
     public Product(String productId, String name, double price, int stock) {
         this.productId = productId;
         this.name = name;
         this.price = price;
         this.stock = stock;
+        sold = 0;
     }
 
     public String getProductId() {
         return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
     }
 
     public String getName() {
@@ -43,5 +52,9 @@ public class Product {
 
     public void setStock(int stock) {
         this.stock = stock;
+    }
+
+    public int getSold() {
+        return sold;
     }
 }

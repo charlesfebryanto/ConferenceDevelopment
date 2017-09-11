@@ -470,6 +470,30 @@ public class Member {
         stage.setScene(scene);
     }
 
+    public void closeConnection() {
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Error", e + "rs");
+        }
+        try {
+            if (pst != null) {
+                pst.close();
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Error", e + "st");
+        }
+        try {
+            if (cn != null) {
+                cn.close();
+            }
+        } catch (Exception e) {
+            DialogBox.alertBox("Error", e + "cn");
+        }
+    }
+
     public String getMemberId() {
         return memberId;
     }
@@ -500,10 +524,6 @@ public class Member {
 
     public int getPosition() {
         return position;
-    }
-
-    public void setMemberId(String memberId) {
-        this.memberId = memberId;
     }
 
     public void setFirstName(String firstName) {
