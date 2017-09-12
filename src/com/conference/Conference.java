@@ -22,13 +22,17 @@ import java.sql.*;
 
 public class Conference extends Application {
 
+    private Member loggedIn;
+
     public static Scene loginScene;
+
+    // db
     private Connection cn = null;
     private PreparedStatement pst = null;
     private ResultSet rs = null;
     private Statement st = null;
 
-
+    // view
     private TextField userId;
     private Button loginButton;
     private Label logoText, loginLabel, loginStatus, copyright;
@@ -131,7 +135,7 @@ public class Conference extends Application {
 //                loggedId = rs.getString("userid");
                 // login based on level
                 if(rs.getInt("position") == 3) {
-                    Administrator loggedIn = new Administrator(rs.getString(1),
+                    loggedIn = new Administrator(rs.getString(1),
                             rs.getString(2),
                             rs.getString(3),
                             rs.getString(4),
@@ -141,7 +145,7 @@ public class Conference extends Application {
                             rs.getInt(8));
                     loggedIn.view(stage);
                 } else if(rs.getInt("position") == 2) {
-                    Receptionist loggedIn = new Receptionist(rs.getString(1),
+                    loggedIn = new Receptionist(rs.getString(1),
                             rs.getString(2),
                             rs.getString(3),
                             rs.getString(4),
@@ -152,7 +156,7 @@ public class Conference extends Application {
                     loggedIn.view(stage);
 //                    Retailer.view(stage);
                 }  else if(rs.getInt("position") == 1) {
-                    Retailer loggedIn = new Retailer(rs.getString(1),
+                    loggedIn = new Retailer(rs.getString(1),
                             rs.getString(2),
                             rs.getString(3),
                             rs.getString(4),
@@ -162,7 +166,7 @@ public class Conference extends Application {
                             rs.getInt(8));
                     loggedIn.view(stage);
                 } else {
-                    Member loggedIn = new Member(rs.getString(1),
+                    loggedIn = new Member(rs.getString(1),
                             rs.getString(2),
                             rs.getString(3),
                             rs.getString(4),

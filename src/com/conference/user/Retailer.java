@@ -32,8 +32,13 @@ public class Retailer extends Member {
     private ResultSet rs = null;
 
     private Company company;
-    private TableView<Product> productTable, sellingTable;
+
+    private double totalCount;
+
     private ObservableList<Product> products, sellProducts;
+
+
+    // view
     private ComboBox<String> searchType;
     private Label transactionDate, companyId, companyName, total, totalValue,
             productId, productName, price, stock, search, scanProduct, scanId;
@@ -41,8 +46,8 @@ public class Retailer extends Member {
             scanProductField, scanIdField;
     private Button addProductButton, saveProductButton, editProductButton, deleteProductButton, searchProductButton,
             scanProductButton, deleteSellButton, substractSellButton, transactionButton;
+    private TableView<Product> productTable, sellingTable;
 
-    private double totalCount;
 
     public Retailer(String memberId, String firstName, String lastName, String gender,
                     String contactNumber, String address, Date dob, int position) {
@@ -150,27 +155,7 @@ public class Retailer extends Member {
         } catch(Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return true;
     }

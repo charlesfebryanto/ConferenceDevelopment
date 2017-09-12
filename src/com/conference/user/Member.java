@@ -27,13 +27,14 @@ import java.sql.*;
 import static com.conference.Conference.loginScene;
 
 public class Member {
-    private String memberId;
+
 
 
     private Connection cn = null;
     private PreparedStatement pst = null;
     private ResultSet rs = null;
 
+    private String memberId;
     private String firstName;
     private String lastName;
     private String gender;
@@ -42,10 +43,13 @@ public class Member {
     private Date dob;
     private int position;
 
-    private Label transactionIdValue, transactionTotalValue, transactionDateValue;
     protected ObservableList<Transaction> transactions;
     protected ObservableList<Lecture> lectures;
     protected ObservableList<Company> companies;
+
+
+    private Label transactionIdValue, transactionTotalValue, transactionDateValue;
+
 
     private TableView<Transaction> transactionTable;
     private TableView<Product> productTable;

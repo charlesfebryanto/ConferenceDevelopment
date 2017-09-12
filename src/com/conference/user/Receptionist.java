@@ -30,7 +30,7 @@ import static com.conference.Conference.loginScene;
 public class Receptionist extends Member {
     private Connection cn = null;
     private PreparedStatement pst = null;
-    private Statement st = null;
+//    private Statement st = null;
     private ResultSet rs = null;
 
     private ToggleGroup genderGroup;
@@ -42,11 +42,12 @@ public class Receptionist extends Member {
     private ToggleGroup engagementGroup;
     private RadioButton lectureEngagement, boothEngagement;
     private ComboBox<String> selectionBox;
+
     private ObservableList<Lecture> lectures;
     private ObservableList<Company> companies;
 
-    private TableView<Lecture> lectureTable;
-    private TableView<Company> companyTable;
+//    private TableView<Lecture> lectureTable;
+//    private TableView<Company> companyTable;
 
     public Receptionist(String memberId, String firstName, String lastName, String gender, String contactNumber, String address, Date dob, int position) {
         super(memberId, firstName, lastName, gender, contactNumber, address, dob, position);

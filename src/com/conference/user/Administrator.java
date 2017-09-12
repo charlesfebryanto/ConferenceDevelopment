@@ -41,6 +41,12 @@ public class Administrator extends Member {
 //    private Statement st = null;
     private ResultSet rs = null;
 
+    private ObservableList<Member> members;
+    private ObservableList<Company> companies, engagements;
+    private ObservableList<Room> rooms;
+    private ObservableList<Lecture> lectures, attends;
+    private ObservableList<Product> sold;
+
     private Label staffFirstName, staffLastName, gender, staffContactNo, staffAddress, staffId, dob, position, search,
             companyId,companyName, searchCompany;
 
@@ -64,11 +70,7 @@ public class Administrator extends Member {
             searchLectureType, searchVisitorType, searchReportProductType,
             searchReportLectureType, searchReportCompanyType;
 
-    private ObservableList<Member> members;
-    private ObservableList<Company> companies, engagements;
-    private ObservableList<Room> rooms;
-    private ObservableList<Lecture> lectures, attends;
-    private ObservableList<Product> sold;
+
 
     private TableView<Member> memberTable, companyStaffTable, visitorMemberTable;
     private TableView<Company> companyTable, visitorCompanyTable, reportCompanyTable;
@@ -374,27 +376,7 @@ public class Administrator extends Member {
                     } catch (Exception e) {
                         DialogBox.alertBox("Warning", e + "");
                     } finally {
-                        try {
-                            if (rs != null) {
-                                rs.close();
-                            }
-                        } catch (Exception e) {
-                            DialogBox.alertBox("Error", e + "rs");
-                        }
-                        try {
-                            if (pst != null) {
-                                pst.close();
-                            }
-                        } catch (Exception e) {
-                            DialogBox.alertBox("Error", e + "st");
-                        }
-                        try {
-                            if (cn != null) {
-                                cn.close();
-                            }
-                        } catch (Exception e) {
-                            DialogBox.alertBox("Error", e + "cn");
-                        }
+                        super.closeConnection();
                     }
                 } else {
                     companyBox.setDisable(true);
