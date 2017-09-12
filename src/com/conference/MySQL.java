@@ -5,7 +5,7 @@ import javafx.scene.control.Alert;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
-public class MySQL {
+public abstract class MySQL {
     public static Connection connect() {
         try {
             Class.forName("com.mysql.jdbc.Driver");

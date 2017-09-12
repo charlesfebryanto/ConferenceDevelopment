@@ -8,7 +8,8 @@ import javafx.scene.control.TextField;
 
 import java.util.Optional;
 
-public class DialogBox {
+public abstract class DialogBox {
+
     public static void alertBox(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
