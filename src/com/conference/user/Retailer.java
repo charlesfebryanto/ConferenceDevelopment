@@ -85,7 +85,7 @@ public class Retailer extends Member {
             menuBar.getMenus().addAll(profile, manageProduct);
 
             isWorking();
-            layout.setCenter(mainView());
+            layout.setCenter(sellProductView());
             layout.setTop(menuBar);
             Scene scene = new Scene(layout, 1024, 768);
             stage.setTitle("Login As : " + getFirstName() + " " + getLastName() +
@@ -94,32 +94,32 @@ public class Retailer extends Member {
         }
     }
 
-    @Override
-    public GridPane mainView() {
-        GridPane body = new GridPane();
-        body.setVgap(10);
-        body.setHgap(10);
-        body.setPadding(new Insets(10));
-
-        Label loginId = new Label("ID : " + getMemberId());
-        GridPane.setConstraints(loginId, 0, 0);
-
-        Label loginName = new Label("Name : " + getFirstName() + " " + getLastName());
-        GridPane.setConstraints(loginName, 0, 1);
-
-        Label loginLevel = new Label("Login Level : " + getPosition());
-        GridPane.setConstraints(loginLevel, 0, 2);
-
-        // just use one time, no need to create method
-
-
-//        isWorking();
-        GridPane.setConstraints(companyId, 0, 3);
-        GridPane.setConstraints(companyName, 0, 4);
-        body.getChildren().addAll(loginId, loginName, loginLevel, companyId, companyName);
-
-        return body;
-    }
+//    @Override
+//    public GridPane mainView() {
+//        GridPane body = new GridPane();
+//        body.setVgap(10);
+//        body.setHgap(10);
+//        body.setPadding(new Insets(10));
+//
+//        Label loginId = new Label("ID : " + getMemberId());
+//        GridPane.setConstraints(loginId, 0, 0);
+//
+//        Label loginName = new Label("Name : " + getFirstName() + " " + getLastName());
+//        GridPane.setConstraints(loginName, 0, 1);
+//
+//        Label loginLevel = new Label("Login Level : " + getPosition());
+//        GridPane.setConstraints(loginLevel, 0, 2);
+//
+//        // just use one time, no need to create method
+//
+//
+////        isWorking();
+//        GridPane.setConstraints(companyId, 0, 3);
+//        GridPane.setConstraints(companyName, 0, 4);
+//        body.getChildren().addAll(loginId, loginName, loginLevel, companyId, companyName);
+//
+//        return body;
+//    }
 
     public boolean isWorking() {
         try {
@@ -175,7 +175,7 @@ public class Retailer extends Member {
         return true;
     }
 
-    private GridPane sellProductView() {
+    public GridPane sellProductView() {
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -345,7 +345,7 @@ public class Retailer extends Member {
         return body;
     }
 
-    private GridPane viewProductView() {
+    public GridPane viewProductView() {
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -546,33 +546,13 @@ public class Retailer extends Member {
                 } catch (Exception e) {
                     DialogBox.alertBox("Warning", e + "");
                 } finally {
-                    try {
-                        if (rs != null) {
-                            rs.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (pst != null) {
-                            pst.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
-                    }
-                    try {
-                        if (cn != null) {
-                            cn.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "cn");
-                    }
+                    super.closeConnection();
                 }
             }
         }
     }
 
-    private void countTotal() {
+    public void countTotal() {
         totalCount = 0.00;
         for(int i=0; i<sellingTable.getItems().size(); i++) {
             double subTotal = (sellingTable.getItems().get(i).getPrice() * sellingTable.getItems().get(i).getStock());
@@ -739,27 +719,7 @@ public class Retailer extends Member {
                 } catch (Exception e) {
                     DialogBox.alertBox("Warning", e + "");
                 } finally {
-                    try {
-                        if (rs != null) {
-                            rs.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (pst != null) {
-                            pst.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
-                    }
-                    try {
-                        if (cn != null) {
-                            cn.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "cn");
-                    }
+                    super.closeConnection();
                 }
             }
         }
@@ -824,27 +784,7 @@ public class Retailer extends Member {
                 } catch (Exception e) {
                     DialogBox.alertBox("Warning", e + "");
                 } finally {
-                    try {
-                        if (rs != null) {
-                            rs.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (pst != null) {
-                            pst.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
-                    }
-                    try {
-                        if (cn != null) {
-                            cn.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "cn");
-                    }
+                    super.closeConnection();
                 }
             }
         }
@@ -923,32 +863,12 @@ public class Retailer extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
 
-    private boolean isEmpty() {
+    public boolean isEmpty() {
         if(productNameField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "Product Name is Empty");
             return true;
@@ -966,8 +886,7 @@ public class Retailer extends Member {
         }
     }
 
-    // only use on isWorking() and addTransaction() (currently)
-    // get product and save to products observable
+
     public ObservableList<Product> getProducts() {
         products = FXCollections.observableArrayList();
         try {
@@ -989,27 +908,7 @@ public class Retailer extends Member {
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return products;
     }

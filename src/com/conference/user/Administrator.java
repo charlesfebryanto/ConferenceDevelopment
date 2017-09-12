@@ -118,7 +118,7 @@ public class Administrator extends Member {
 
         menuBar.getMenus().addAll(profile, view);
 
-        layout.setCenter(mainView());
+        layout.setCenter(reportView());
         layout.setTop(menuBar);
 
         Scene scene = new Scene(layout, 1024, 768);
@@ -126,7 +126,7 @@ public class Administrator extends Member {
         stage.setScene(scene);
     }
 
-    private GridPane staffView() {
+    public GridPane staffView() {
         getMembers();
         getCompanies();
         GridPane body = new GridPane();
@@ -709,7 +709,7 @@ public class Administrator extends Member {
         return body;
     }
 
-    private GridPane lectureView() {
+    public GridPane lectureView() {
         getRooms();
         getLectures();
 
@@ -950,7 +950,7 @@ public class Administrator extends Member {
         return body;
     }
 
-    private GridPane visitorView() {
+    public GridPane visitorView() {
         getMembers();
 
         GridPane body = new GridPane();
@@ -1100,7 +1100,7 @@ public class Administrator extends Member {
         return body;
     }
 
-    private GridPane reportView() {
+    public GridPane reportView() {
         getProductSold();
         getCompanyEngagements();
         getLectureAttendance();
@@ -1238,7 +1238,7 @@ public class Administrator extends Member {
         return body;
     }
 
-    private void saveStaff() {
+    public void saveStaff() {
         if (isStaffFormEmpty()) {
             DialogBox.alertBox("Warning", "No Empty Value is Allowed");
         } else {
@@ -1309,29 +1309,8 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Error", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
-
         }
     }
 
@@ -1472,27 +1451,7 @@ public class Administrator extends Member {
             } catch(Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -1542,33 +1501,13 @@ public class Administrator extends Member {
                 } catch (Exception e) {
                     DialogBox.alertBox("Warning", e + "");
                 } finally {
-                    try {
-                        if (rs != null) {
-                            rs.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "rs");
-                    }
-                    try {
-                        if (pst != null) {
-                            pst.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "st");
-                    }
-                    try {
-                        if (cn != null) {
-                            cn.close();
-                        }
-                    } catch (Exception e) {
-                        DialogBox.alertBox("Error", e + "cn");
-                    }
+                    super.closeConnection();
                 }
             }
         }
     }
 
-    private void searchLecture(TableView<Lecture> lectureTable, ObservableList<Lecture> lectures,
+    public void searchLecture(TableView<Lecture> lectureTable, ObservableList<Lecture> lectures,
                                ComboBox<String> searchLectureType, TextField searchLectureField) {
         ObservableList<Lecture> searchLecture = FXCollections.observableArrayList();
         String searchLectureValue = searchLectureField.getText().toLowerCase();
@@ -1665,7 +1604,7 @@ public class Administrator extends Member {
         productTable.setItems(searchProduct);
     }
 
-    private void addLecture() {
+    public void addLecture() {
         saveLectureButton.setDisable(false);
         editLectureButton.setDisable(true);
         deleteLectureButton.setDisable(true);
@@ -1692,7 +1631,7 @@ public class Administrator extends Member {
         });
     }
 
-    private void addRoom() {
+    public void addRoom() {
         saveRoomButton.setDisable(false);
         editRoomButton.setDisable(true);
         deleteRoomButton.setDisable(true);
@@ -1705,7 +1644,7 @@ public class Administrator extends Member {
         });
     }
 
-    private void editLecture() {
+    public void editLecture() {
         if(isLectureFormEmpty()) {
             DialogBox.alertBox("Warning", "Empty Field is not Allowed");
         } else {
@@ -1775,32 +1714,12 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
 
-    private void editRoom() {
+    public void editRoom() {
         if(isRoomFormEmpty()) {
             DialogBox.alertBox("Warning", "Empty Field is not Allowed");
         } else {
@@ -1833,27 +1752,7 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -1887,32 +1786,12 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
 
-    private void deleteRoom() {
+    public void deleteRoom() {
         boolean confirm = DialogBox.confirmationBox("Warning", "Are you sure you want to delete " +
                 roomNameField.getText() + " ? Room with record cannot be removed");
         if(confirm) {
@@ -1937,27 +1816,7 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -2029,27 +1888,7 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -2082,27 +1921,7 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -2233,27 +2052,7 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if(rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if(pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if(cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -2282,27 +2081,7 @@ public class Administrator extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
@@ -2334,32 +2113,12 @@ public class Administrator extends Member {
             } catch(Exception e) {
                 DialogBox.alertBox("Warning", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
     }
 
-    private boolean isCompanyFormEmpty() {
+    public boolean isCompanyFormEmpty() {
         if(companyIdField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "Company ID is Empty");
             return true;
@@ -2371,7 +2130,7 @@ public class Administrator extends Member {
         }
     }
 
-    private boolean isLectureFormEmpty() {
+    public boolean isLectureFormEmpty() {
         if(lectureIdField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "Lecture ID is Empty");
             return true;
@@ -2398,7 +2157,7 @@ public class Administrator extends Member {
         }
     }
 
-    private boolean isRoomFormEmpty() {
+    public boolean isRoomFormEmpty() {
         if(roomIdField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "Room ID is Empty");
             return true;
@@ -2453,10 +2212,11 @@ GROUP BY engage.companyId
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            closeConnection();
+            super.closeConnection();
         }
         return attends;
     }
+
     public ObservableList<Company> getCompanyEngagements() {
         engagements = FXCollections.observableArrayList();
         try {
@@ -2476,7 +2236,7 @@ GROUP BY engage.companyId
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            closeConnection();
+            super.closeConnection();
         }
         return engagements;
     }
@@ -2560,32 +2320,12 @@ GROUP BY engage.companyId
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if (pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if (cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return companies;
     }
 
-    private ObservableList<Member> getMembers() {
+    public ObservableList<Member> getMembers() {
         members = FXCollections.observableArrayList();
         try {
             cn = MySQL.connect();
@@ -2607,27 +2347,7 @@ GROUP BY engage.companyId
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return members;
     }
@@ -2662,32 +2382,12 @@ GROUP BY engage.companyId
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return lectures;
     }
 
-    private ObservableList<Room> getRooms() {
+    public ObservableList<Room> getRooms() {
         rooms = FXCollections.observableArrayList();
         try {
             cn = MySQL.connect();
@@ -2707,27 +2407,7 @@ GROUP BY engage.companyId
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return rooms;
     }

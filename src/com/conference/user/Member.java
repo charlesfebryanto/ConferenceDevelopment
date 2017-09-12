@@ -85,7 +85,7 @@ public class Member {
 
         menuBar.getMenus().addAll(profile);
 
-        layout.setCenter(mainView());
+        layout.setCenter(productPurchasedView());
         layout.setTop(menuBar);
 
         Scene scene = new Scene(layout, 1024, 768);
@@ -93,27 +93,27 @@ public class Member {
         stage.setScene(scene);
     }
 
-    public GridPane mainView() {
-
-        GridPane body = new GridPane();
-        body.setVgap(10);
-        body.setHgap(10);
-        body.setPadding(new Insets(10));
-
-        Label loginId = new Label("ID : " + getMemberId());
-        GridPane.setConstraints(loginId, 0, 0);
-
-        Label loginName = new Label("Name : " + getFirstName() + " " + getLastName());
-        GridPane.setConstraints(loginName, 0, 1);
-
-        Label loginLevel = new Label("Login Level : " + getPosition());
-        GridPane.setConstraints(loginLevel, 0, 2);
-
-//        Label loginDOB = new Label("Login Level : " + getDob());
-
-        body.getChildren().addAll(loginId, loginName, loginLevel);
-        return body;
-    }
+//    public GridPane mainView() {
+//
+//        GridPane body = new GridPane();
+//        body.setVgap(10);
+//        body.setHgap(10);
+//        body.setPadding(new Insets(10));
+//
+//        Label loginId = new Label("ID : " + getMemberId());
+//        GridPane.setConstraints(loginId, 0, 0);
+//
+//        Label loginName = new Label("Name : " + getFirstName() + " " + getLastName());
+//        GridPane.setConstraints(loginName, 0, 1);
+//
+//        Label loginLevel = new Label("Login Level : " + getPosition());
+//        GridPane.setConstraints(loginLevel, 0, 2);
+//
+////        Label loginDOB = new Label("Login Level : " + getDob());
+//
+//        body.getChildren().addAll(loginId, loginName, loginLevel);
+//        return body;
+//    }
 
     public GridPane productPurchasedView() {
         getTransactions(getMemberId());
@@ -313,27 +313,7 @@ public class Member {
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if (pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if (cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            closeConnection();
         }
         return companies;
     }
@@ -374,27 +354,7 @@ public class Member {
          } catch (Exception e) {
              DialogBox.alertBox("Warning", e + "");
          } finally {
-             try {
-                 if (rs != null) {
-                     rs.close();
-                 }
-             } catch (Exception e) {
-                 DialogBox.alertBox("Error", e + "rs");
-             }
-             try {
-                 if (pst != null) {
-                     pst.close();
-                 }
-             } catch (Exception e) {
-                 DialogBox.alertBox("Error", e + "st");
-             }
-             try {
-                 if (cn != null) {
-                     cn.close();
-                 }
-             } catch (Exception e) {
-                 DialogBox.alertBox("Error", e + "cn");
-             }
+             closeConnection();
          }
          return lectures;
     }
@@ -440,27 +400,7 @@ public class Member {
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if (pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if (cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            closeConnection();
         }
         return transactions;
     }

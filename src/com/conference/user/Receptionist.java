@@ -80,7 +80,7 @@ public class Receptionist extends Member {
 
         menuBar.getMenus().addAll(profile, manage);
 
-        layout.setCenter(mainView());
+        layout.setCenter(registerVisitorView());
         layout.setTop(menuBar);
 
         Scene scene = new Scene(layout, 1024, 768);
@@ -88,7 +88,7 @@ public class Receptionist extends Member {
         stage.setScene(scene);
     }
 
-    private GridPane registerVisitorView() {
+    public GridPane registerVisitorView() {
         GridPane body = new GridPane();
         body.setVgap(10);
         body.setHgap(10);
@@ -183,7 +183,7 @@ public class Receptionist extends Member {
         return body;
     }
 
-    private GridPane addVisitorView() {
+    public GridPane addVisitorView() {
         getLectures();
         getCompanies();
 
@@ -242,7 +242,7 @@ public class Receptionist extends Member {
         return body;
     }
 
-    private void insertVisitor() {
+    public void insertVisitor() {
         if (firstNameField.getText().isEmpty()) {
             DialogBox.alertBox("Warning", "First Name is Empty");
         } else if (lastNameField.getText().isEmpty()) {
@@ -295,33 +295,13 @@ public class Receptionist extends Member {
             } catch (Exception e) {
                 DialogBox.alertBox("Error", e + "");
             } finally {
-                try {
-                    if (rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if (pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if (cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
         Platform.runLater(() -> memberIdField.clear());
     }
 
-    private void insertEngagement() {
+    public void insertEngagement() {
         String tableName;
         String boxId;
         if(engagementGroup.getSelectedToggle() == lectureEngagement) {
@@ -361,34 +341,7 @@ public class Receptionist extends Member {
             } catch(Exception e) {
                 DialogBox.alertBox("Error", e + "");
             } finally {
-                try {
-                    if(rs != null) {
-                        rs.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "rs");
-                }
-                try {
-                    if(st != null) {
-                        st.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if(pst != null) {
-                        pst.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "st");
-                }
-                try {
-                    if(cn != null) {
-                        cn.close();
-                    }
-                } catch (Exception e) {
-                    DialogBox.alertBox("Error", e + "cn");
-                }
+                super.closeConnection();
             }
         }
         Platform.runLater(() -> idScanner.clear());
@@ -411,27 +364,7 @@ public class Receptionist extends Member {
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return companies;
     }
@@ -468,33 +401,13 @@ public class Receptionist extends Member {
         } catch (Exception e) {
             DialogBox.alertBox("Warning", e + "");
         } finally {
-            try {
-                if(rs != null) {
-                    rs.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "rs");
-            }
-            try {
-                if(pst != null) {
-                    pst.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "st");
-            }
-            try {
-                if(cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                DialogBox.alertBox("Error", e + "cn");
-            }
+            super.closeConnection();
         }
         return lectures;
     }
 
     // calling method to populate lectures/companies list then loop to fill the combobox
-    private void engagementSelectionSwitch() {
+    public void engagementSelectionSwitch() {
         selectionBox.getItems().remove(0, selectionBox.getItems().size());
         if (engagementGroup.getSelectedToggle() == lectureEngagement) {
             selectionBox.setPromptText("Select Lecture");
@@ -505,7 +418,6 @@ public class Receptionist extends Member {
             }
         } else {
             selectionBox.setPromptText("Select Booth");
-
 
             for(int i=0; i<companies.size(); i++) {
                 selectionBox.getItems().add(companies.get(i).getName());
